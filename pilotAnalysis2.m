@@ -124,9 +124,9 @@ for ii = 1:numTrials
         yvis = ysnd;
         y = ysnd;
         if ~bFilt
-            ysnd = y;
+            ysnd = y_orig;
         end
-        soundsc(y(1 : round(recordTime*fs)), fs);
+        soundsc(ysnd(1 : round(recordTime*fs)), fs);
         
         %GUI to classify--------------------
         SEQ_GUI(y, fs, recordTime);
