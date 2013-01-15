@@ -1,4 +1,4 @@
-function pilotAnalysis_fMRI_SEQPDS_011413(specFileName, groupNum, subjName, testName, recordTime, saveName)
+function pilotAnalysis2(specFileName, groupNum, subjName, testName, recordTime, saveName)
 %e.g. pilotAnalysis_fMRI_SEQPDS_011413('fmria', 1, 'SEQ01C03_fMRI', 'test1', 'testfoo')
 %group #: SEQ<group#><C/P><subjNum>
 %for SEQPDS: test1 - fmria, test2 - fmrib, etc.
@@ -104,9 +104,16 @@ for ii = 1:numTrials
         trialNumString = num2str(ii);
         recordFile = strcat(subjName,'\',testName,'_',trialNumString,'_',stim);
         recordFile
+        
         [y, fs] = wavread(recordFile);
-        soundsc(y(1:round(recordTime*fs)), fs);
+        
         y_orig = y;
+        y = WienerScalart96(y, fs); %apply filter
+        if length(y) < length(y_orig)
+            y = [y; zeros(length(y_orig) - length(y), 1)];
+        end
+        
+        soundsc(y(1 : round(recordTime*fs)), fs);
         
         %GUI to classify--------------------
         SEQ_GUI(y, fs, recordTime);
@@ -138,7 +145,7 @@ for ii = 1:numTrials
             
             index2 = 1;
             while index2 == 1
-                y = WienerScalart96(y,fs); %apply filter
+                
                 
                 flagEndFound = 0;
                 winSize = round(fs * .0015);
@@ -153,64 +160,152 @@ for ii = 1:numTrials
                 
                 while EndWin < length(y) %ii = 1:noWins
                     dat = detrend(y(BegWin:EndWin, 1), 0);
-                    dat=convn(dat,[1;-.95]);
+                    dat = convn(dat,[1;-.95]);
                     dat = detrend(dat, 0);
                     int = sum(dat.^2);
                     I(iter) = 20*log10(int/.0015); %000015
                     tm(iter) = time(BegWin);
                     if iter > OnDur && speechOn == 0 && length(find(I(iter-OnDur:iter) > onThresh)) == length(I(iter-OnDur:iter)) && tm(iter-OnDur) > .09
-                        disp('***');
+%                         disp('***');
                         speechOn = 1;
                         speechOnTime = tm(iter-OnDur);
                         endTm = round(speechOnTime*fs);
                         EndWin = BegWin + round(fs * .010);
                     elseif iter > OffDur && speechOn == 1 && isempty(find(I(iter-OffDur:iter) > offThresh)) == 1 && tm(iter-OffDur) - speechOnTime > .40
-                        disp('###');
+%                         disp('###');
                         speechOff = 1;
                         speechOffTime = tm(iter-OffDur);
                         offTm = round(speechOffTime*fs);
                         winSize = round(fs * .0015);
                     end
-                    if speechOn == 1 && speechOff == 1
-                        figure('Position', pos);
+
+                    BegWin = BegWin + Incr;
+                    EndWin = EndWin + Incr;
+                    iter = iter + 1;
+                end
+                    
+%                     if speechOn == 1 && speechOff == 1
+                        guidat.hfig = figure('Position', pos);
                         %TOP PLOT-----------------------------------
-                        subplot(3, 1, 1), plot(time, detrend(y, 0), 'k'); hold on;
+                        guidat.hsp1 = subplot(3, 1, 1); plot(time, detrend(y, 0), 'k'); hold on;
                         %title(['Token is ' char(StimList(i)) '  < press spacebar to continue >']);
                         axis tight;
                         ax = axis;
-                        line([speechOnTime speechOnTime], [ax(3) ax(4)], 'Color', 'k', 'LineWidth', 2.0);
-                        line([speechOffTime speechOffTime], [ax(3) ax(4)], 'Color', 'k', 'LineWidth', 2.0);
+                        
+                        if speechOn == 1 && speechOff == 1
+                            line([speechOnTime speechOnTime], [ax(3) ax(4)], 'Color', 'k', 'LineWidth', 2.0);
+                            line([speechOffTime speechOffTime], [ax(3) ax(4)], 'Color', 'k', 'LineWidth', 2.0);
+                        end
+                        
                         %MIDDLE PLOT-----------------------------------
-                        subplot(3, 1, 2), plot(tm, I, 'k'); hold on;
+                        guidat.hsp2 = subplot(3, 1, 2); plot(tm, I, 'k'); hold on;
                         bx = axis;
-                        line([speechOnTime speechOnTime], [bx(3) bx(4)], 'Color', 'k', 'LineWidth', 2.0);
-                        line([speechOffTime speechOffTime], [bx(3) bx(4)], 'Color', 'k', 'LineWidth', 2.0);
+                        
+                        if speechOn == 1 && speechOff == 1
+                            line([speechOnTime speechOnTime], [bx(3) bx(4)], 'Color', 'k', 'LineWidth', 2.0);
+                            line([speechOffTime speechOffTime], [bx(3) bx(4)], 'Color', 'k', 'LineWidth', 2.0);
+                        end
                         axis([ax(1) ax(2) bx(3) bx(4)]);
+                        
                         %BOTTOM PLOT-----------------------------------
-                        subplot(3, 1, 3); hold on;
+                        guidat.hsp3 = subplot(3, 1, 3); hold on;
                         nwin = 512; % samples
                         noverlap = 256; %samples
                         nfft = 512; %samples
-                        spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
+%                         spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
+                        spectrogram(y, nwin, noverlap, nfft, fs, 'yaxis');
                         ylim([0 4000]);
                         
-                        accept = menu('Select', 'Take', 'Edit');
-                        switch accept
-                            case 1
-                                flagEndFound = 1;
-                                data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
-                                
-                            case 2
-                                flagEndFound = 1;
-                                
-                                
-                                %input times
-                                strResp_on = input('Enter the onset time (in secs) and type Enter\n', 's');
-                                strResp_end = input('Enter the offset time (in secs) and type Enter\n', 's');
-                                numResp_on = str2double(strResp_on);
-                                numResp_end = str2double(strResp_end);
-                                
-                                data{ii}.times = [ii numResp_on numResp_end];
+                        guidat.hLineOn = NaN;
+                        guidat.hLineEnd = NaN;
+                        while 1
+                            accept = menu('Select', 'Take', 'Edit', 'Select & Play');
+                            switch accept
+                                case 1
+                                    flagEndFound = 1;
+                                    if ~isfield(data{ii}, 'times') || isempty(data{ii}.times)
+                                        if speechOn == 1 && speechOff == 1
+                                            data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
+                                        else
+                                            data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
+                                            fprintf(1, 'WARNING: data{%d}.times left empty because no automatically calculated or user entered time stamps are available.\n', ii);
+                                        end
+                                    end
+                                    break;
+                                    
+                                case 2
+                                    flagEndFound = 1;
+
+                                    bTimeLabelsOkay = 0;
+                                    
+                                    while ~bTimeLabelsOkay
+                                        %input times
+                                        set(0, 'CurrentFigure', guidat.hfig);
+                                        set(gcf, 'CurrentAxes', guidat.hsp1);
+                                        ys = get(gca, 'YLim');
+
+                                        if ~isnan(guidat.hLineOn)
+                                            delete(guidat.hLineOn);
+                                        end
+                                        if ~isnan(guidat.hLineEnd)
+                                            delete(guidat.hLineEnd);
+                                        end
+
+                                        title('Set the onset time...', 'Color', 'b'); drawnow;
+                                        coord1 = ginput(1);
+                                        guidat.hLineOn = plot(repmat(coord1(1), 1, 2), ys, 'b--');
+
+                                        title('Set the offset time...', 'Color', 'b'); drawnow;
+                                        coord2 = ginput(1);
+                                        guidat.hLineEnd = plot(repmat(coord2(1), 1, 2), ys, 'b-');
+
+                                        set(gca, 'YLim', ys);
+
+                                        numResp_on = coord1(1);
+                                        numResp_end = coord2(1);
+
+                                        bTimeLabelsOkay = (numResp_end > numResp_on);
+                                        if ~bTimeLabelsOkay
+                                            title('The onset and offset times you set are incorrect. Try again...', 'Color', 'r');
+                                            drawnow;
+                                            pause(1);
+                                        else
+                                            title('', 'Color', 'b'); drawnow;
+                                        end
+                                    end
+
+    %                                 strResp_on = input('Enter the onset time (in secs) and type Enter\n', 's');
+    %                                 strResp_end = input('Enter the offset time (in secs) and type Enter\n', 's');                               
+    %                                 numResp_on = str2double(strResp_on);
+    %                                 numResp_end = str2double(strResp_end);
+
+                                    data{ii}.times = [ii numResp_on numResp_end];
+                                case 3 % Select and play
+                                    set(0, 'CurrentFigure', guidat.hfig);
+                                    set(gcf, 'CurrentAxes', guidat.hsp1);
+                                    ys = get(gca, 'YLim');
+                                    
+                                    green = [0, 0.5, 0];
+                                    title('Set beginning of sound snipppet...', 'Color', green); drawnow;
+                                    coord1 = ginput(1);
+                                    guidat.hPBLine0 = plot(repmat(coord1(1), 1, 2), ys, '--', 'Color', green);
+                                    drawnow;
+
+                                    title('Set end of sound snippet...', 'Color', green); drawnow;
+                                    coord2 = ginput(1);
+                                    guidat.hPBLine1 = plot(repmat(coord2(1), 1, 2), ys, '-', 'Color', green);
+                                    drawnow;
+                                    
+                                    title('', 'Color', 'b'); drawnow;
+                                    
+                                    
+                                    ysnip = y(time >= coord1(1) & time < coord2(1));                                    
+                                    wavplay(ysnip, fs);
+                                    pause(0.5);
+                                    
+                                    delete(guidat.hPBLine0);
+                                    delete(guidat.hPBLine1);
+                            end
                         end
                         %pause;
                         close;
@@ -227,40 +322,38 @@ for ii = 1:numTrials
                         I = [];
                         tm = [];
                         break;
-                    end
-                    BegWin = BegWin + Incr;
-                    EndWin = EndWin + Incr;
-                    iter = iter + 1;
-                end
+%                     end
+                    
                 
-                if flagEndFound == 0
-                    disp('*****');
-                    figure('Position', pos);
-                    %TOP PLOT-----------------------------------
-                    subplot(3, 1, 1), plot(time, detrend(y, 0), 'k'); hold on;
-                    %title(['Token is ' char(StimList(i)) '  < press spacebar to continue >']);
-                    axis tight;
-                    ax = axis;
-                    %MIDDLE PLOT-----------------------------------
-                    subplot(3, 1, 2), plot(tm, I, 'k'); hold on;
-                    bx = axis;
-                    %BOTTOM PLOT-----------------------------------
-                    subplot(3, 1, 3); hold on;
-                    nwin = 512; % samples
-                    noverlap = 256; %samples
-                    nfft = 512; %samples
-                    spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
-                    ylim([0 4000]);
-                    
-                    
-                    %input times
-                    strResp_on = input('What is the onset time (in secs)\n', 's');
-                    strResp_end = input('What is the offset time (in secs)\n', 's');
-                    numResp_on = str2double(strResp_on);
-                    numResp_end = str2double(strResp_end);
-                    
-                    data{ii}.times = [ii numResp_on numResp_end];
-                end
+                
+%                 if flagEndFound == 0
+%                     disp('*****');
+%                     figure('Position', pos);
+%                     %TOP PLOT-----------------------------------
+%                     subplot(3, 1, 1), plot(time, detrend(y, 0), 'k'); hold on;
+%                     %title(['Token is ' char(StimList(i)) '  < press spacebar to continue >']);
+%                     axis tight;
+%                     ax = axis;
+%                     %MIDDLE PLOT-----------------------------------
+%                     subplot(3, 1, 2), plot(tm, I, 'k'); hold on;
+%                     bx = axis;
+%                     %BOTTOM PLOT-----------------------------------
+%                     subplot(3, 1, 3); hold on;
+%                     nwin = 512; % samples
+%                     noverlap = 256; %samples
+%                     nfft = 512; %samples
+%                     spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
+%                     ylim([0 4000]);
+%                     
+%                     
+%                     %input times
+%                     strResp_on = input('What is the onset time (in secs)\n', 's');
+%                     strResp_end = input('What is the offset time (in secs)\n', 's');
+%                     numResp_on = str2double(strResp_on);
+%                     numResp_end = str2double(strResp_end);
+%                     
+%                     data{ii}.times = [ii numResp_on numResp_end];
+%                 end
                 index2 = 0;
             end
             
@@ -399,3 +492,5 @@ end
 
 matFileName = strcat(subjName,'\trials_',testName,'_',saveName);
 save(matFileName, 'data');
+
+fprintf(1, 'Results saved to file %s\n', matFileName);
