@@ -129,7 +129,7 @@ for ii = 1:numTrials
         soundsc(ysnd(1 : round(recordTime*fs)), fs);
         
         %GUI to classify--------------------
-        SEQ_GUI(y, fs, recordTime);
+        SEQ_GUI(ysnd, fs, recordTime);
         uiwait;
         
 %         buttonVals{1}
@@ -262,12 +262,14 @@ for ii = 1:numTrials
 
                                         title('Set the onset time...', 'Color', 'b'); drawnow;
                                         coord1 = ginput(1);
-                                        guidat.hLineOn = plot(repmat(coord1(1), 1, 2), ys, 'b--');
+                                        set(gcf, 'CurrentAxes', guidat.hsp1);
+                                        guidat.hLineOn = plot(repmat(coord1(1), 1, 2), ys, 'b--');                                        
                                         numResp_on = coord1(1);
                 
                                         if ~calc_half
                                             title('Set the offset time...', 'Color', 'b'); drawnow;
                                             coord2 = ginput(1);
+                                            set(gcf, 'CurrentAxes', guidat.hsp1);
                                             guidat.hLineEnd = plot(repmat(coord2(1), 1, 2), ys, 'b-');
                                             numResp_end = coord2(1);
                                         else
@@ -277,7 +279,8 @@ for ii = 1:numTrials
                                             guidat.hLineEnd = NaN;
                                             numResp_end = NaN;
                                         end
-
+                                        
+                                        set(gcf, 'CurrentAxes', guidat.hsp1);
                                         set(gca, 'YLim', ys);
 
                                         bTimeLabelsOkay = (numResp_end > numResp_on) || calc_half;
@@ -304,12 +307,15 @@ for ii = 1:numTrials
                                     green = [0, 0.5, 0];
                                     title('Set beginning of sound snipppet...', 'Color', green); drawnow;
                                     coord1 = ginput(1);
-                                    guidat.hPBLine0 = plot(repmat(coord1(1), 1, 2), ys, '--', 'Color', green);
+                                    set(gcf, 'CurrentAxes', guidat.hsp1);
+                                    guidat.hPBLine0 = plot(repmat(coord1(1), 1, 2), ys, '--', 'Color', green);                                    
                                     drawnow;
 
                                     title('Set end of sound snippet...', 'Color', green); drawnow;
                                     coord2 = ginput(1);
+                                    set(gcf, 'CurrentAxes', guidat.hsp1);
                                     guidat.hPBLine1 = plot(repmat(coord2(1), 1, 2), ys, '-', 'Color', green);
+                                    
                                     drawnow;
                                     
                                     title('', 'Color', 'b'); drawnow;
@@ -317,6 +323,7 @@ for ii = 1:numTrials
                                     
                                     ysnip = ysnd(time >= coord1(1) & time < coord2(1));                                    
                                     wavplay(ysnip, fs);
+%                                     soundsc(ysnip, fs);
                                     pause(0.5);
                                     
                                     delete(guidat.hPBLine0);
