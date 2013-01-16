@@ -225,8 +225,8 @@ for ii = 1:numTrials
                         spectrogram(yvis, nwin, noverlap, nfft, fs, 'yaxis');
                         ylim([0 4000]);
                         
-                        guidat.hLineOn = NaN;
-                        guidat.hLineEnd = NaN;
+                        guidat.hLineOn = [NaN, NaN, NaN];
+                        guidat.hLineEnd = [NaN, NaN, NaN];
                         while 1
                             accept = menu('Select', 'Take', 'Edit', 'Select & Play');
                             switch accept
@@ -253,30 +253,48 @@ for ii = 1:numTrials
                                         set(gcf, 'CurrentAxes', guidat.hsp1);
                                         ys = get(gca, 'YLim');
 
-                                        if ~isnan(guidat.hLineOn)
-                                            delete(guidat.hLineOn);
+                                        for j0 = 1 : length(guidat.hLineOn)
+                                            if ~isnan(guidat.hLineOn(j0))
+                                                delete(guidat.hLineOn(j0));
+                                            end
                                         end
-                                        if ~isnan(guidat.hLineEnd)
-                                            delete(guidat.hLineEnd);
+                                        for j0 = 1 : length(guidat.hLineEnd)
+                                            if ~isnan(guidat.hLineEnd(j0))
+                                                delete(guidat.hLineEnd(j0));
+                                            end
                                         end
 
                                         title('Set the onset time...', 'Color', 'b'); drawnow;
                                         coord1 = ginput(1);
+                                        
                                         set(gcf, 'CurrentAxes', guidat.hsp1);
-                                        guidat.hLineOn = plot(repmat(coord1(1), 1, 2), ys, 'b--');                                        
+                                        guidat.hLineOn(1) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                        set(gcf, 'CurrentAxes', guidat.hsp2);
+                                        guidat.hLineOn(2) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                        set(gcf, 'CurrentAxes', guidat.hsp3);
+                                        guidat.hLineOn(3) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                        set(gcf, 'CurrentAxes', guidat.hsp1);
+                                        
                                         numResp_on = coord1(1);
                 
                                         if ~calc_half
                                             title('Set the offset time...', 'Color', 'b'); drawnow;
                                             coord2 = ginput(1);
+                                            
                                             set(gcf, 'CurrentAxes', guidat.hsp1);
-                                            guidat.hLineEnd = plot(repmat(coord2(1), 1, 2), ys, 'b-');
+                                            guidat.hLineEnd(1) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
+                                            set(gcf, 'CurrentAxes', guidat.hsp2);
+                                            guidat.hLineEnd(2) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
+                                            set(gcf, 'CurrentAxes', guidat.hsp3);
+                                            guidat.hLineEnd(3) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
+                                            set(gcf, 'CurrentAxes', guidat.hsp1);
+                                            
                                             numResp_end = coord2(1);
                                         else
                                             title('No offset since this is an unfinished trial.', 'Color', 'm'); drawnow;
                                             pause(1.5);
                                             title('', 'Color', 'b'); drawnow;
-                                            guidat.hLineEnd = NaN;
+                                            guidat.hLineEnd = [NaN, NaN, NaN];
                                             numResp_end = NaN;
                                         end
                                         
