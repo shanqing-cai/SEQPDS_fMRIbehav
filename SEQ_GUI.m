@@ -64,6 +64,11 @@ function simpleGUI(y, fs, recordTime)
 
     %play sound
     function [returnVars] = button2_callback(src,ev)
-        soundsc(y(1:round(recordTime*fs)), fs);
+        if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+            soundsc(y(1:round(recordTime*fs)), fs);
+        else
+            ap = audioplayer(y(1:round(recordTime*fs)), fs);
+            play(ap, 1);
+        end
     end
 end

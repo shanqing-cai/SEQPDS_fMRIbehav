@@ -126,7 +126,12 @@ for ii = 1:numTrials
         if ~bFilt
             ysnd = y_orig;
         end
-        soundsc(ysnd(1 : round(recordTime*fs)), fs);
+        if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+            soundsc(ysnd(1 : round(recordTime*fs)), fs);
+        else
+            ap = audioplayer(ysnd(1 : round(recordTime*fs)), fs);
+            play(ap, 1);
+        end
         
         %GUI to classify--------------------
         SEQ_GUI(ysnd, fs, recordTime);
@@ -228,7 +233,11 @@ for ii = 1:numTrials
                         guidat.hLineOn = [NaN, NaN, NaN];
                         guidat.hLineEnd = [NaN, NaN, NaN];
                         while 1
-                            accept = menu('Select', 'Take', 'Edit', 'Select & Play');
+                            if ~isfield(data{ii}, 'times')          
+                                accept = 2; % Edit
+                            else
+                                accept = menu('Select', 'Take', 'Edit', 'Select & Play');
+                            end
                             switch accept
                                 case 1
                                     flagEndFound = 1;
@@ -339,8 +348,14 @@ for ii = 1:numTrials
                                     title('', 'Color', 'b'); drawnow;
                                     
                                     
-                                    ysnip = ysnd(time >= coord1(1) & time < coord2(1));                                    
-                                    wavplay(ysnip, fs);
+                                    ysnip = ysnd(time >= coord1(1) & time < coord2(1));
+                                    if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+                                        wavplay(ysnip, fs);
+                                    else
+                                        ap = audioplayer(ysnip, fs);
+                                        play(ap, 1);
+                                    end
+                                    
 %                                     soundsc(ysnip, fs);
                                     pause(0.5);
                                     
