@@ -1,4 +1,4 @@
-function simpleGUI(y, fs, recordTime)
+function simpleGUI(y, fs, recordTime, audioMode)
 
     global buttonVals done
 %     recordTime = 3;
@@ -20,14 +20,14 @@ function simpleGUI(y, fs, recordTime)
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Stutter, Prolong', 'Tag','st_pro')
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  60 135 30], 'String','Stutter, Mid-word block', 'Tag','st_block')
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Stutter, Cluster', 'Tag','st_clust')
-
-	uicontrol('Style','pushbutton', 'String','Play', 'Position',[420 120 60 50], 'Callback',{@button2_callback})
+    
+	uicontrol('Style','pushbutton', 'String','Play', 'Position',[420 120 60 50], 'Callback',{@button2_callback, audioMode})
     uicontrol('Style','pushbutton', 'String','Submit', 'Position',[420 35 60 50], 'Callback',{@button_callback})
     
     set(hFig, 'Visible','on')        %# Make the GUI visible
 
     %# callback function
-    function [returnVars] = button_callback(src,ev)
+    function [returnVars] = button_callback(src, ev)
         a = get(get(errorBtnGrp,'SelectedObject'),'Tag');
         b = get(get(fluentBtnGrp,'SelectedObject'),'Tag');
 
@@ -63,9 +63,12 @@ function simpleGUI(y, fs, recordTime)
     end
 
     %play sound
-    function [returnVars] = button2_callback(src,ev)
-        if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+    function [returnVars] = button2_callback(src, ev, audioMode)
+%         if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+        if isequal(audioMode, 'soundsc')
             soundsc(y(1:round(recordTime*fs)), fs);
+        elseif isequal(audioMode, 'wavplay')
+            wavplay(y(1:round(recordTime*fs)), fs);
         else
             ap = audioplayer(y(1:round(recordTime*fs)), fs);
             play(ap, 1);

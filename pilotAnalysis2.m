@@ -39,6 +39,13 @@ if nargin > 6
     end
 end
 
+audioMode = 'soundsc';
+if ~isempty(strmatch('audioplayer', varargin, 'exact'));
+    audioMode = 'audioplayer';
+elseif ~isempty(strmatch('wavplay', varargin, 'exact'));
+    audioMode = 'wavplay';
+end
+
 screen_pts = get(0,'ScreenSize');
 pos = [screen_pts(1) screen_pts(2) screen_pts(3) screen_pts(4) - 45];
 
@@ -126,15 +133,18 @@ for ii = 1:numTrials
         if ~bFilt
             ysnd = y_orig;
         end
-        if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+%         if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+        if isequal(audioMode, 'soundsc')
             soundsc(ysnd(1 : round(recordTime*fs)), fs);
+        elseif isequal(audioMode, 'wavplay');
+            wavplay(ysnd(1 : round(recordTime*fs)), fs);
         else
             ap = audioplayer(ysnd(1 : round(recordTime*fs)), fs);
             play(ap, 1);
         end
         
-        %GUI to classify--------------------
-        SEQ_GUI(ysnd, fs, recordTime);
+        %GUI to classify--------------------        
+        SEQ_GUI(ysnd, fs, recordTime, audioMode);        
         uiwait;
         
 %         buttonVals{1}
@@ -349,7 +359,10 @@ for ii = 1:numTrials
                                     
                                     
                                     ysnip = ysnd(time >= coord1(1) & time < coord2(1));
-                                    if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+%                                     if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+                                    if isequal(audioMode, 'soundsc')
+                                        soundsc(ysnip, fs);
+                                    elseif isequal(audioMode, 'wavplay')
                                         wavplay(ysnip, fs);
                                     else
                                         ap = audioplayer(ysnip, fs);
