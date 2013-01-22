@@ -40,9 +40,9 @@ if nargin > 6
 end
 
 audioMode = 'soundsc';
-if ~isempty(strmatch('audioplayer', varargin, 'exact'));
+if ~isempty(fsic(varargin, 'audioplayer'))
     audioMode = 'audioplayer';
-elseif ~isempty(strmatch('wavplay', varargin, 'exact'));
+elseif ~isempty(fsic(varargin, 'wavplay'))
     audioMode = 'wavplay';
 end
 
@@ -80,8 +80,26 @@ speechOff = 0;
 iter = 1;
 term = 0;
 
+matFileName = strcat(subjName,'\trials_',testName,'_',saveName);
+if ~isequal(matFileName(end - 3 : end), '.mat')
+    matFileName = [matFileName, '.mat'];
+end
 
-for ii = 1:numTrials
+if ~isempty(fsic(varargin, 'redo'))
+    redoTrialN = varargin{fsic(varargin, 'redo') + 1};    
+    if ~isfile(matFileName)
+        error('Cannot find saved data file %s. Cannot proceed with mode redo.\n', matFileName);
+    end
+    load(matFileName);
+    
+    a_numTrials = redoTrialN;
+else
+    a_numTrials = 1 : numTrials;
+end
+
+
+
+for ii = a_numTrials
     disp(ii);
     %open next elicited psuedoword
     
@@ -437,8 +455,6 @@ for ii = 1:numTrials
     tm = [];
 end
 
-
-matFileName = strcat(subjName,'\trials_',testName,'_',saveName);
 save(matFileName, 'data');
 
 fprintf(1, 'Results saved to file %s\n', matFileName);
