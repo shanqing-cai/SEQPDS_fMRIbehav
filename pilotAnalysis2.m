@@ -260,138 +260,152 @@ for ii = a_numTrials
                         
                         guidat.hLineOn = [NaN, NaN, NaN];
                         guidat.hLineEnd = [NaN, NaN, NaN];
-                        while 1
-                            if ~isfield(data{ii}, 'times')          
-                                accept = 2; % Edit
-                            else
-                                accept = menu('Select', 'Take', 'Edit', 'Select & Play');
-                            end
-                            switch accept
-                                case 1
-                                    flagEndFound = 1;
-                                    if ~isfield(data{ii}, 'times') || isempty(data{ii}.times)
-                                        if speechOn == 1 && speechOff == 1
-                                            data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
-                                        else
-                                            data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
-                                            fprintf(1, 'WARNING: data{%d}.times left empty because no automatically calculated or user entered time stamps are available.\n', ii);
+                        if data{ii}.accuracy == 2 || data{ii}.accuracy == 4 % Silence or Unusable (unrecognizable) --> no onset / offset labeling is necessary
+                            set(gcf, 'CurrentAxes', guidat.hsp1);
+                            title('No onset / offset labeling is needed since this trial is marked as silence or unusable', 'Color', 'k', 'FontSize', 14);
+                            drawnow;
+                            pause(2);
+                            title('', 'FontSize', 12, 'Color', 'k');
+                            
+                            data{ii}.times = [];
+                        else
+                            while 1
+                                if ~isfield(data{ii}, 'times')          
+                                    accept = 2; % Edit
+                                else
+                                    accept = menu('Select', 'Take', 'Edit', 'Select & Play');
+                                end
+                                switch accept
+                                    case 1
+                                        flagEndFound = 1;
+                                        if ~isfield(data{ii}, 'times') || isempty(data{ii}.times)
+                                            if speechOn == 1 && speechOff == 1
+                                                data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
+                                            else
+                                                data{ii}.times = [ii speechOnTime speechOffTime-speechOnTime];
+                                                fprintf(1, 'WARNING: data{%d}.times left empty because no automatically calculated or user entered time stamps are available.\n', ii);
+                                            end
                                         end
-                                    end
-                                    break;
-                                    
-                                case 2
-                                    flagEndFound = 1;
+                                        break;
 
-                                    bTimeLabelsOkay = 0;
-                                    
-                                    while ~bTimeLabelsOkay
-                                        %input times
+                                    case 2
+                                        flagEndFound = 1;
+
+                                        bTimeLabelsOkay = 0;
+
+                                        while ~bTimeLabelsOkay
+                                            %input times
+                                            set(0, 'CurrentFigure', guidat.hfig);
+                                            set(gcf, 'CurrentAxes', guidat.hsp1);
+                                            ys = get(gca, 'YLim');
+
+                                            for j0 = 1 : length(guidat.hLineOn)
+                                                if ~isnan(guidat.hLineOn(j0))
+                                                    delete(guidat.hLineOn(j0));
+                                                end
+                                            end
+                                            for j0 = 1 : length(guidat.hLineEnd)
+                                                if ~isnan(guidat.hLineEnd(j0))
+                                                    delete(guidat.hLineEnd(j0));
+                                                end
+                                            end
+
+                                            title('Set the onset time...', 'Color', 'b'); drawnow;
+                                            coord1 = ginput(1);
+
+                                            set(gcf, 'CurrentAxes', guidat.hsp1);
+                                            guidat.hLineOn(1) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                            set(gcf, 'CurrentAxes', guidat.hsp2);
+                                            guidat.hLineOn(2) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                            set(gcf, 'CurrentAxes', guidat.hsp3);
+                                            guidat.hLineOn(3) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                            set(gcf, 'CurrentAxes', guidat.hsp1);
+
+                                            numResp_on = coord1(1);
+
+                                            if ~calc_half
+                                                title('Set the offset time...', 'Color', 'b'); drawnow;
+                                                coord2 = ginput(1);
+
+                                                set(gcf, 'CurrentAxes', guidat.hsp1);
+                                                guidat.hLineEnd(1) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
+                                                set(gcf, 'CurrentAxes', guidat.hsp2);
+                                                guidat.hLineEnd(2) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
+                                                set(gcf, 'CurrentAxes', guidat.hsp3);
+                                                guidat.hLineEnd(3) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
+                                                set(gcf, 'CurrentAxes', guidat.hsp1);
+
+                                                numResp_end = coord2(1);
+                                            else
+                                                title('No offset since this is an unfinished trial.', 'Color', 'm'); drawnow;
+                                                pause(1.5);
+                                                title('', 'Color', 'b'); drawnow;
+                                                guidat.hLineEnd = [NaN, NaN, NaN];
+                                                numResp_end = NaN;
+                                            end
+
+                                            set(gcf, 'CurrentAxes', guidat.hsp1);
+                                            set(gca, 'YLim', ys);
+
+                                            bTimeLabelsOkay = (numResp_end > numResp_on) || calc_half;
+                                            if ~bTimeLabelsOkay
+                                                title('The onset and offset times you set are incorrect. Try again...', 'Color', 'r');
+                                                drawnow;
+                                                pause(1);
+                                            else
+                                                title('', 'Color', 'b'); drawnow;
+                                            end
+                                        end
+
+        %                                 strResp_on = input('Enter the onset time (in secs) and type Enter\n', 's');
+        %                                 strResp_end = input('Enter the offset time (in secs) and type Enter\n', 's');                               
+        %                                 numResp_on = str2double(strResp_on);
+        %                                 numResp_end = str2double(strResp_end);
+
+                                        data{ii}.times = [ii numResp_on numResp_end];
+                                    case 3 % Select and play
                                         set(0, 'CurrentFigure', guidat.hfig);
                                         set(gcf, 'CurrentAxes', guidat.hsp1);
                                         ys = get(gca, 'YLim');
 
-                                        for j0 = 1 : length(guidat.hLineOn)
-                                            if ~isnan(guidat.hLineOn(j0))
-                                                delete(guidat.hLineOn(j0));
-                                            end
-                                        end
-                                        for j0 = 1 : length(guidat.hLineEnd)
-                                            if ~isnan(guidat.hLineEnd(j0))
-                                                delete(guidat.hLineEnd(j0));
-                                            end
-                                        end
-
-                                        title('Set the onset time...', 'Color', 'b'); drawnow;
+                                        green = [0, 0.5, 0];
+                                        title('Set beginning of sound snipppet...', 'Color', green); drawnow;
                                         coord1 = ginput(1);
-                                        
                                         set(gcf, 'CurrentAxes', guidat.hsp1);
-                                        guidat.hLineOn(1) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
-                                        set(gcf, 'CurrentAxes', guidat.hsp2);
-                                        guidat.hLineOn(2) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
-                                        set(gcf, 'CurrentAxes', guidat.hsp3);
-                                        guidat.hLineOn(3) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'b--');
+                                        guidat.hPBLine0 = plot(repmat(coord1(1), 1, 2), ys, '--', 'Color', green);                                    
+                                        drawnow;
+
+                                        title('Set end of sound snippet...', 'Color', green); drawnow;
+                                        coord2 = ginput(1);
                                         set(gcf, 'CurrentAxes', guidat.hsp1);
-                                        
-                                        numResp_on = coord1(1);
-                
-                                        if ~calc_half
-                                            title('Set the offset time...', 'Color', 'b'); drawnow;
-                                            coord2 = ginput(1);
-                                            
-                                            set(gcf, 'CurrentAxes', guidat.hsp1);
-                                            guidat.hLineEnd(1) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
-                                            set(gcf, 'CurrentAxes', guidat.hsp2);
-                                            guidat.hLineEnd(2) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
-                                            set(gcf, 'CurrentAxes', guidat.hsp3);
-                                            guidat.hLineEnd(3) = plot(repmat(coord2(1), 1, 2), get(gca, 'YLim'), 'b-');
-                                            set(gcf, 'CurrentAxes', guidat.hsp1);
-                                            
-                                            numResp_end = coord2(1);
+                                        guidat.hPBLine1 = plot(repmat(coord2(1), 1, 2), ys, '-', 'Color', green);
+
+                                        drawnow;
+
+                                        title('', 'Color', 'b'); drawnow;
+
+
+                                        ysnip = ysnd(time >= coord1(1) & time < coord2(1));
+    %                                     if ~isempty(strfind(lower(getenv('OS')), 'windows'))
+                                        if ~isempty(ysnip)
+                                            if isequal(audioMode, 'soundsc')                                            
+                                                soundsc(ysnip, fs);
+                                            elseif isequal(audioMode, 'wavplay')
+                                                wavplay(ysnip, fs);
+                                            else
+                                                ap = audioplayer(ysnip, fs);
+                                                play(ap, 1);
+                                            end
                                         else
-                                            title('No offset since this is an unfinished trial.', 'Color', 'm'); drawnow;
-                                            pause(1.5);
-                                            title('', 'Color', 'b'); drawnow;
-                                            guidat.hLineEnd = [NaN, NaN, NaN];
-                                            numResp_end = NaN;
+                                            fprintf(1, 'WARNING: the selected audio snippet appears to be empty. It will not be played.\n');
                                         end
-                                        
-                                        set(gcf, 'CurrentAxes', guidat.hsp1);
-                                        set(gca, 'YLim', ys);
 
-                                        bTimeLabelsOkay = (numResp_end > numResp_on) || calc_half;
-                                        if ~bTimeLabelsOkay
-                                            title('The onset and offset times you set are incorrect. Try again...', 'Color', 'r');
-                                            drawnow;
-                                            pause(1);
-                                        else
-                                            title('', 'Color', 'b'); drawnow;
-                                        end
-                                    end
+    %                                     soundsc(ysnip, fs);
+                                        pause(0.5);
 
-    %                                 strResp_on = input('Enter the onset time (in secs) and type Enter\n', 's');
-    %                                 strResp_end = input('Enter the offset time (in secs) and type Enter\n', 's');                               
-    %                                 numResp_on = str2double(strResp_on);
-    %                                 numResp_end = str2double(strResp_end);
-
-                                    data{ii}.times = [ii numResp_on numResp_end];
-                                case 3 % Select and play
-                                    set(0, 'CurrentFigure', guidat.hfig);
-                                    set(gcf, 'CurrentAxes', guidat.hsp1);
-                                    ys = get(gca, 'YLim');
-                                    
-                                    green = [0, 0.5, 0];
-                                    title('Set beginning of sound snipppet...', 'Color', green); drawnow;
-                                    coord1 = ginput(1);
-                                    set(gcf, 'CurrentAxes', guidat.hsp1);
-                                    guidat.hPBLine0 = plot(repmat(coord1(1), 1, 2), ys, '--', 'Color', green);                                    
-                                    drawnow;
-
-                                    title('Set end of sound snippet...', 'Color', green); drawnow;
-                                    coord2 = ginput(1);
-                                    set(gcf, 'CurrentAxes', guidat.hsp1);
-                                    guidat.hPBLine1 = plot(repmat(coord2(1), 1, 2), ys, '-', 'Color', green);
-                                    
-                                    drawnow;
-                                    
-                                    title('', 'Color', 'b'); drawnow;
-                                    
-                                    
-                                    ysnip = ysnd(time >= coord1(1) & time < coord2(1));
-%                                     if ~isempty(strfind(lower(getenv('OS')), 'windows'))
-                                    if isequal(audioMode, 'soundsc')
-                                        soundsc(ysnip, fs);
-                                    elseif isequal(audioMode, 'wavplay')
-                                        wavplay(ysnip, fs);
-                                    else
-                                        ap = audioplayer(ysnip, fs);
-                                        play(ap, 1);
-                                    end
-                                    
-%                                     soundsc(ysnip, fs);
-                                    pause(0.5);
-                                    
-                                    delete(guidat.hPBLine0);
-                                    delete(guidat.hPBLine1);
+                                        delete(guidat.hPBLine0);
+                                        delete(guidat.hPBLine1);
+                                end
                             end
                         end
                         %pause;
