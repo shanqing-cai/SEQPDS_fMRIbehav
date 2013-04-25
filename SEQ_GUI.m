@@ -33,9 +33,9 @@ function [hFig, hSpect] = SEQ_GUI(y, fs, recordTime, audioMode)
     
     confidenceGrp = uibuttongroup('Position',[0 0.0 .8 0.2], 'Units','Normalized','Title','RATING CONFIDENCE');
     cb_lowConfid_accuracy = ...
-        uicontrol('Style', 'Checkbox', 'Parent', confidenceGrp, 'HandleVisibility', 'off', 'Position', [15 5 160 30], 'String', 'Accuracy - low confidence', 'Tag','fluent')
+        uicontrol('Style', 'Checkbox', 'Parent', confidenceGrp, 'HandleVisibility', 'off', 'Position', [15 5 160 30], 'String', 'Accuracy - low confidence', 'Tag','fluent');
     cb_lowConfid_fluency = ...
-        uicontrol('Style', 'Checkbox', 'Parent', confidenceGrp, 'HandleVisibility', 'off', 'Position', [215 5 160 30], 'String', 'Fluency - low confidence', 'Tag','fluent')
+        uicontrol('Style', 'Checkbox', 'Parent', confidenceGrp, 'HandleVisibility', 'off', 'Position', [215 5 160 30], 'String', 'Fluency - low confidence', 'Tag','fluent');
     
 	uicontrol('Style','pushbutton', 'String','Play', 'Position',[420 120 60 50], 'Callback',{@button2_callback, audioMode})
     uicontrol('Style','pushbutton', 'String','Submit', 'Position',[420 35 60 50], 'Callback',{@button_callback})
@@ -73,8 +73,8 @@ function [returnVars] = button_callback(src, ev)
             buttonVals{2} = 5;
     end
     
-    accuracyLowConfid = get(cb_lowConfid_accuracy, 'Value')
-    fluencyLowConfid = get(cb_lowConfid_fluency, 'Value')
+    accuracyLowConfid = get(cb_lowConfid_accuracy, 'Value');
+    fluencyLowConfid = get(cb_lowConfid_fluency, 'Value');
 
     display('Submitting...');
     done = 1;
