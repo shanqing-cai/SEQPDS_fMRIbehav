@@ -30,6 +30,7 @@ pilotAnalysis2('fmrig', 3, 'SEQ03C01_behavioral', 'test7', 3, 'scai', 'noFilter'
 === This redoes only trial #17.
 
 (04/25/2013)
+
 === Added a new option 'redoCatOnly' that functions like 'redo', but skips the onset/offset labeling part, i.e., lets the user change only the categorical rating (accuracy and fluency)
 Usage example: 
 
@@ -37,5 +38,6 @@ pilotAnalysis2('fmrih', 3, 'SEQ03C07_behavioral', 'test8', 3, 'scai', 'noFilter'
 (Don't forget to change scai to your own username) 
 
 To do this over all trials of a run, assuming that there are 40 trials in total, do:
+
 pilotAnalysis2('fmrih', 3, 'SEQ03C07_behavioral', 'test8', 3, 'scai', 'noFilter', 'redoCatOnly', [1 : 40])
 
