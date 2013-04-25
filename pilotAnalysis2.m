@@ -27,6 +27,8 @@ function pilotAnalysis2(specFileName, groupNum, subjName, testName, recordTime, 
 
 global buttonVals
 global done
+global accuracyLowConfid
+global fluencyLowConfid
 
 if nargin < 2
     error('Must provide required input parameters specFileName, subjName, and testName');
@@ -85,8 +87,21 @@ if ~isequal(matFileName(end - 3 : end), '.mat')
     matFileName = [matFileName, '.mat'];
 end
 
-if ~isempty(fsic(varargin, 'redo'))
-    redoTrialN = varargin{fsic(varargin, 'redo') + 1};    
+if ~isempty(fsic(varargin, 'redo')) || ~isempty(fsic(varargin, 'redoCatOnly'))
+    if ~isempty(fsic(varargin, 'redo')) && ~isempty(fsic(varargin, 'redoCatOnly'))
+        error('Options redo and redoCatOnly should not be used together');
+    end
+    
+    if ~isempty(fsic(varargin, 'redo'))
+        redoTrialN = varargin{fsic(varargin, 'redo') + 1};
+        
+        bRedoCatOnly = 0;
+    else
+        redoTrialN = varargin{fsic(varargin, 'redoCatOnly') + 1};
+        
+        bRedoCatOnly = 1;
+    end
+        
     if ~isfile(matFileName)
         error('Cannot find saved data file %s. Cannot proceed with mode redo.\n', matFileName);
     end
@@ -94,10 +109,9 @@ if ~isempty(fsic(varargin, 'redo'))
     
     a_numTrials = redoTrialN;
 else
+    redoTrialN = [];
     a_numTrials = 1 : numTrials;
 end
-
-
 
 for ii = a_numTrials
     disp(ii);
@@ -162,7 +176,7 @@ for ii = a_numTrials
         end
         
         %GUI to classify--------------------        
-        SEQ_GUI(ysnd, fs, recordTime, audioMode);        
+        [hFig, hSpect] = SEQ_GUI(ysnd, fs, recordTime, audioMode);        
         uiwait;
         
 %         buttonVals{1}
@@ -170,6 +184,16 @@ for ii = a_numTrials
         
         data{ii}.accuracy = buttonVals{1};
         data{ii}.fluency = buttonVals{2};
+        data{ii}.accuracyLowConfid = accuracyLowConfid;
+        data{ii}.fluencyLowConfid = fluencyLowConfid;
+        
+        close all hidden;
+        
+        if ~isempty(redoTrialN)
+            if bRedoCatOnly
+                continue;
+            end
+        end
         
         calc = 0;
         calc_half = 0;
@@ -409,7 +433,7 @@ for ii = a_numTrials
                             end
                         end
                         %pause;
-                        close;
+                        close all;
                         %sigmat.signal = detrend(y(tgTm:end),0);
                         count = count + 1;
                         stimOn = 0;
