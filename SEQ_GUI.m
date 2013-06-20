@@ -2,6 +2,7 @@ function [hFig, hSpect] = SEQ_GUI(y, fs, recordTime, audioMode)
     global buttonVals done
     global accuracyLowConfid
     global fluencyLowConfid
+    global bStarter
     
 %     recordTime = 3;
 
@@ -13,10 +14,10 @@ function [hFig, hSpect] = SEQ_GUI(y, fs, recordTime, audioMode)
     xlabel('Time (s)');
     ylabel('Frequency (Hz)');
     
-    hFig = figure('Visible','off', 'Menu','none', 'Name','Spectrogram', 'Resize','on', 'Position',[100 100 500 250]);    
+    hFig = figure('Visible','off', 'Menu','none', 'Name','Spectrogram', 'Resize','on', 'Position',[100 100 500 320]);    
     movegui(hFig, 'center');          %# Move the GUI to the center of the screen      
 
-    errorBtnGrp = uibuttongroup('Position',[0 0.2 .4 0.8], 'Units','Normalized','Title','ACCURACY');
+    errorBtnGrp = uibuttongroup('Position',[0 0.4 0.4 0.6], 'Units','Normalized','Title','ACCURACY');
     uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Accurate', 'Tag','accurate')
     uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Silence', 'Tag','silence')
     uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Error, Use', 'Tag','error_use')
@@ -24,18 +25,22 @@ function [hFig, hSpect] = SEQ_GUI(y, fs, recordTime, audioMode)
     uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Error, Unfinished', 'Tag','error_unfinish')
 
     
-    fluentBtnGrp = uibuttongroup('Position',[.4 0.2 .4 0.8], 'Units','Normalized','Title','FLUENCY');
+    fluentBtnGrp = uibuttongroup('Position',[.4 0.4 0.4 0.6], 'Units','Normalized','Title','FLUENCY');
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Fluent', 'Tag','fluent')
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Stutter, Rep', 'Tag','st_rep')
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Stutter, Prolong', 'Tag','st_pro')
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  60 135 30], 'String','Stutter, Mid-word block', 'Tag','st_block')
     uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Stutter, Cluster', 'Tag','st_clust')
     
-    confidenceGrp = uibuttongroup('Position',[0 0.0 .8 0.2], 'Units','Normalized','Title','RATING CONFIDENCE');
+    confidenceGrp = uibuttongroup('Position',[0 0.2 0.8 0.2], 'Units','Normalized','Title','RATING CONFIDENCE');
     cb_lowConfid_accuracy = ...
         uicontrol('Style', 'Checkbox', 'Parent', confidenceGrp, 'HandleVisibility', 'off', 'Position', [15 5 160 30], 'String', 'Accuracy - low confidence', 'Tag','fluent');
     cb_lowConfid_fluency = ...
         uicontrol('Style', 'Checkbox', 'Parent', confidenceGrp, 'HandleVisibility', 'off', 'Position', [215 5 160 30], 'String', 'Fluency - low confidence', 'Tag','fluent');
+    
+    starterGrp = uibuttongroup('Position',[0 0.0 0.8 0.2], 'Units','Normalized','Title','STARTER');
+    cb_starter = ...
+        uicontrol('Style', 'Checkbox', 'Parent', starterGrp, 'HandleVisibility', 'off', 'Position', [15 5 160 30], 'String', 'Contains starter', 'Tag','fluent');
     
 	uicontrol('Style','pushbutton', 'String','Play', 'Position',[420 120 60 50], 'Callback',{@button2_callback, audioMode})
     uicontrol('Style','pushbutton', 'String','Submit', 'Position',[420 35 60 50], 'Callback',{@button_callback})
@@ -75,6 +80,7 @@ function [returnVars] = button_callback(src, ev)
     
     accuracyLowConfid = get(cb_lowConfid_accuracy, 'Value');
     fluencyLowConfid = get(cb_lowConfid_fluency, 'Value');
+    bStarter = get(cb_starter, 'Value');
 
     display('Submitting...');
     done = 1;

@@ -29,6 +29,7 @@ global buttonVals
 global done
 global accuracyLowConfid
 global fluencyLowConfid
+global bStarter
 
 if nargin < 2
     error('Must provide required input parameters specFileName, subjName, and testName');
@@ -186,6 +187,7 @@ for ii = a_numTrials
         data{ii}.fluency = buttonVals{2};
         data{ii}.accuracyLowConfid = accuracyLowConfid;
         data{ii}.fluencyLowConfid = fluencyLowConfid;
+        data{ii}.bStarter = bStarter;
         
         close all hidden;
         
@@ -284,6 +286,8 @@ for ii = a_numTrials
                         
                         guidat.hLineOn = [NaN, NaN, NaN];
                         guidat.hLineEnd = [NaN, NaN, NaN];
+                        guidat.hLineStarter = [NaN, NaN, NaN];
+                        
                         if data{ii}.accuracy == 2 || data{ii}.accuracy == 4 % Silence or Unusable (unrecognizable) --> no onset / offset labeling is necessary
                             set(gcf, 'CurrentAxes', guidat.hsp1);
                             title('No onset / offset labeling is needed since this trial is marked as silence or unusable', 'Color', 'k', 'FontSize', 14);
@@ -323,6 +327,11 @@ for ii = a_numTrials
                                             set(gcf, 'CurrentAxes', guidat.hsp1);
                                             ys = get(gca, 'YLim');
 
+                                            for j0 = 1 : length(guidat.hLineStarter)
+                                                if ~isnan(guidat.hLineStarter(j0))
+                                                    delete(guidat.hLineStarter(j0));
+                                                end
+                                            end
                                             for j0 = 1 : length(guidat.hLineOn)
                                                 if ~isnan(guidat.hLineOn(j0))
                                                     delete(guidat.hLineOn(j0));
@@ -333,8 +342,26 @@ for ii = a_numTrials
                                                     delete(guidat.hLineEnd(j0));
                                                 end
                                             end
+                                            
+                                            % -- Optional: starter -- %                                            
+                                            if isfield(data{ii}, 'bStarter') && data{ii}.bStarter == 1
+                                                title('Set starter onset time...', 'Color', 'm', 'FontWeight', 'Bold'); drawnow;
+                                                coord1 = ginput(1);
+                                                
+                                                set(gcf, 'CurrentAxes', guidat.hsp1);
+                                                guidat.hLineStarter(1) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'm--');
+                                                set(gcf, 'CurrentAxes', guidat.hsp2);
+                                                guidat.hLineStarter(2) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'm--');
+                                                set(gcf, 'CurrentAxes', guidat.hsp3);
+                                                guidat.hLineStarter(3) = plot(repmat(coord1(1), 1, 2), get(gca, 'YLim'), 'm--');
+                                                set(gcf, 'CurrentAxes', guidat.hsp1);
 
-                                            title('Set the onset time...', 'Color', 'b'); drawnow;
+                                                numResp_starter = coord1(1);
+                                            else
+                                                numResp_starter = NaN;
+                                            end
+
+                                            title('Set word onset time...', 'Color', 'b'); drawnow;
                                             coord1 = ginput(1);
 
                                             set(gcf, 'CurrentAxes', guidat.hsp1);
@@ -371,7 +398,11 @@ for ii = a_numTrials
                                             set(gcf, 'CurrentAxes', guidat.hsp1);
                                             set(gca, 'YLim', ys);
 
-                                            bTimeLabelsOkay = (numResp_end > numResp_on) || calc_half;
+                                            if isfield(data{ii}, 'bStarter') && data{ii}.bStarter == 1
+                                                bTimeLabelsOkay = (numResp_end > numResp_on) && (numResp_on > numResp_starter) || calc_half;
+                                            else
+                                                bTimeLabelsOkay = (numResp_end > numResp_on) || calc_half;
+                                            end
                                             if ~bTimeLabelsOkay
                                                 title('The onset and offset times you set are incorrect. Try again...', 'Color', 'r');
                                                 drawnow;
@@ -386,6 +417,9 @@ for ii = a_numTrials
         %                                 numResp_on = str2double(strResp_on);
         %                                 numResp_end = str2double(strResp_end);
 
+                                        if isfield(data{ii}, 'bStarter') && data{ii}.bStarter == 1
+                                            data{ii}.starterOnset = numResp_starter;
+                                        end
                                         data{ii}.times = [ii numResp_on numResp_end];
                                     case 3 % Select and play
                                         set(0, 'CurrentFigure', guidat.hfig);
