@@ -1,4 +1,4 @@
-function long2short(longDir, shortDir, outDir)
+function long2short(longDir, shortDir, outDir, in_runNum, shOnset, shDur, varargin)
 %% 
 % long2short: cut long wav files that correspond to runs into short wav
 %             files that correspond to trials.
@@ -6,6 +6,13 @@ function long2short(longDir, shortDir, outDir)
 %% Constants
 RMS_WIN = 0.020;    % Unit: s
 SEG_DUR_THRESH = 2.0;     % Unit: s
+
+%% Optional arguments
+if ~isempty(fsic(varargin, '--skip'))
+    nSkip = varargin{fsic(varargin, '--skip') + 1};
+else
+    nSkip = 0;
+end
 
 %%
 dl = dir(fullfile(longDir, '*_test*.wav'));
@@ -35,6 +42,10 @@ for i1 = 1 : numel(dl)
         end
     end
     assert(~isnan(runNum));
+    
+    if runNum ~= in_runNum
+        continue;
+    end
     
     dsh = dir(fullfile(shortDir, sprintf('test%d_*_*.wav', runNum)));
     
@@ -93,20 +104,29 @@ for i1 = 1 : numel(dl)
 	text(xs(1) + 0.05 * range(xs), ys(2) - 0.10 * range(ys), ...
          sprintf('Scan duration (s): mean=%.3f; min=%.3f; max=%.3f', ...
                  mean(scanDurs), min(scanDurs), max(scanDurs)));
+	drawnow;
              
     % -- Serially extract new short wav files -- %
-    for i2 = 1 : numel(shtns)
-        tn = shtns(i2);
+    for i2 = 1 + nSkip : numel(shtns)
+        if nSkip == 0
+            tn = shtns(i2);
+        else
+            tn = shtns(i2) - shtns(nSkip);
+        end
         
-        idx0 = find(tAxis > t_off(tn), 1);
-        idx1 = max(find(tAxis < t_on(tn + 1)));
+        idx0 = find(tAxis > t_off(tn) + shOnset, 1);
+        idx1 = find(tAxis > t_off(tn) + shOnset + shDur, 1);
+%         idx0 = max(find(tAxis < t_on(tn + 1) - shDur));
+%         idx1 = max(find(tAxis < t_on(tn + 1)));
         idx0 = idx0 * nw + 1;
         idx1 = idx1 * nw;
         ws = wl(idx0 : idx1);
         
-        fprintf(1, '%s: dur = %.3f s\n', shfns{i2}, length(ws) / fs);
-        wavplay(ws, fs);
+        fprintf(1, '%s: dur = %.3f s --> %.3f s\n', shfns{i2}, t_on(tn + 1) - t_off(tn), length(ws) / fs);
+%         wavplay(ws, fs);
         
+        outwfn = fullfile(outDir, shfns{i2});
+        wavwrite(ws, fs, outwfn);
     end
 end
 

@@ -41,3 +41,12 @@ To do this over all trials of a run, assuming that there are 40 trials in total,
 
 pilotAnalysis2('fmrih', 3, 'SEQ03C07_behavioral', 'test8', 3, 'scai', 'noFilter', 'redoCatOnly', [1 : 40])
 
+
+(07/02/2013)
+
+=== Instructions for extracting short wav files from long ones ===
+# Usage example: 
+long2short('SEQ03P03_test_long', 'SEQ03P03_behavioral', 'SEQ03P03_reproc', 1, 3.5, 3.0)
+
+# For skipping files, do:
+long2short('SEQ03P03_test_long', 'SEQ03P03_behavioral', 'SEQ03P03_reproc', 3, 3.5, 3.0, '--skip', 1)
