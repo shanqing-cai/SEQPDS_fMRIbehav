@@ -91,9 +91,11 @@ end
 function [returnVars] = button2_callback(src, ev, audioMode)
 %         if ~isempty(strfind(lower(getenv('OS')), 'windows'))
     if isequal(audioMode, 'soundsc')
-        soundsc(y(1:round(recordTime*fs)), fs);
+%         soundsc(y(1:round(recordTime*fs)), fs);
+        soundsc(y, fs);
     elseif isequal(audioMode, 'wavplay')
-        wavplay(y(1:round(recordTime*fs)), fs);
+%         wavplay(y(1:round(recordTime*fs)), fs);
+        wavplay(y, fs);
     else
         ap = audioplayer(y(1:round(recordTime*fs)), fs);
         play(ap, 1);

@@ -168,9 +168,11 @@ for ii = a_numTrials
         end
 %         if ~isempty(strfind(lower(getenv('OS')), 'windows'))
         if isequal(audioMode, 'soundsc')
-            soundsc(ysnd(1 : round(recordTime*fs)), fs);
+%             soundsc(ysnd(1 : round(recordTime*fs)), fs);
+            soundsc(ysnd, fs);
         elseif isequal(audioMode, 'wavplay');
-            wavplay(ysnd(1 : round(recordTime*fs)), fs);
+            wavplay(ysnd, fs);
+%             wavplay(ysnd(1 : round(recordTime*fs)), fs);
         else
             ap = audioplayer(ysnd(1 : round(recordTime*fs)), fs);
             play(ap, 1);
@@ -525,8 +527,10 @@ for ii = a_numTrials
     iter = 0;
     I = [];
     tm = [];
+    
+    save(matFileName, 'data');
 end
 
-save(matFileName, 'data');
+
 
 fprintf(1, 'Results saved to file %s\n', matFileName);
