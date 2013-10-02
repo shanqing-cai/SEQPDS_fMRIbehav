@@ -114,8 +114,8 @@ if nargin<4
 end
 if fix(ShiftLen)~=ShiftLen
     ShiftLen=fix(ShiftLen);
-    disp('The shift length have to be an integer as it is the number of samples.')
-    disp(['shift length is fixed to ' num2str(ShiftLen)])
+%     disp('The shift length have to be an integer as it is the number of samples.')
+%     disp(['shift length is fixed to ' num2str(ShiftLen)])
 end
 
 [FreqRes FrameNum]=size(XNEW);

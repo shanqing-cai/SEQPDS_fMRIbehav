@@ -1,8 +1,8 @@
-function [hFig, hSpect] = SEQ_GUI(y, fs, recordTime, audioMode)
-    global buttonVals done
-    global accuracyLowConfid
-    global fluencyLowConfid
-    global bStarter
+function [hFig, hSpect, retVals] = SEQ_GUI(y, fs, recordTime, audioMode, varargin)
+%     global buttonVals done
+%     global accuracyLowConfid
+%     global fluencyLowConfid
+%     global bStarter
     
 %     recordTime = 3;
 
@@ -15,7 +15,14 @@ function [hFig, hSpect] = SEQ_GUI(y, fs, recordTime, audioMode)
     ylabel('Frequency (Hz)');
     
     hFig = figure('Visible','off', 'Menu','none', 'Name','Spectrogram', 'Resize','on', 'Position',[100 100 500 320]);    
-    movegui(hFig, 'center');          %# Move the GUI to the center of the screen      
+    movegui(hFig, 'center');          %# Move the GUI to the center of the screen
+    
+    if ~isempty(fsic(varargin, '--stimWord'))
+        stimWord = varargin{fsic(varargin, '--stimWord') + 1};
+        
+        set(hSpect, 'Name', stimWord);
+        set(hFig, 'Name', sprintf('Spectrogram: %s', stimWord));
+    end
 
     errorBtnGrp = uibuttongroup('Position',[0 0.4 0.4 0.6], 'Units','Normalized','Title','ACCURACY');
     uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Accurate', 'Tag','accurate')
@@ -82,7 +89,7 @@ function [returnVars] = button_callback(src, ev)
     fluencyLowConfid = get(cb_lowConfid_fluency, 'Value');
     bStarter = get(cb_starter, 'Value');
 
-    display('Submitting...');
+%     display('Submitting...');
     done = 1;
     close(gcbf);
 end
@@ -101,4 +108,18 @@ function [returnVars] = button2_callback(src, ev, audioMode)
         play(ap, 1);
     end
 end
+
+uiwait;
+
+%     global buttonVals done
+%     global accuracyLowConfid
+%     global fluencyLowConfid
+%     global bStarter
+
+retVals = struct;
+retVals.buttonVals = buttonVals;
+retVals.done = done;
+retVals.accuracyLowConfid = accuracyLowConfid;
+retVals.fluencyLowConfid = fluencyLowConfid;
+retVals.bStarter = bStarter;
 end
