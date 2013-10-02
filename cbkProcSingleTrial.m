@@ -10,6 +10,7 @@ assert(exist('data') == 1);
 %% 
 [y, fs] = wavread(data{ii}.recordFile);
 
+%%
 y_orig = y;
 
 ysnd = WienerScalart96(y, fs); % Apply filter
@@ -35,7 +36,8 @@ else
 end
 
 %GUI to classify--------------------        
-[hFig, hSpect, retVals] = SEQ_GUI(ysnd, fs, uihdls.recordTime, uihdls.audioMode);
+[hFig, hSpect, retVals] = SEQ_GUI(ysnd, fs, uihdls.recordTime, uihdls.audioMode, ...
+                                  '--stimWord', data{ii}.stimWord);
 
 % uiwait;
 
@@ -141,8 +143,17 @@ nwin = 512; % samples
 noverlap = 256; %samples
 nfft = 512; %samples
 %                         spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
+
+plot(retVals.f0_time, retVals.f0_value, 'k-');
+plot(retVals.fmt_time, [retVals.f1, retVals.f2], 'b-');
+
 spectrogram(yvis, nwin, noverlap, nfft, fs, 'yaxis');
-ylim([0 4000]);
+ylim([0, 4000]);
+
+legend({'F0', 'F1 & F2'}, 'Location', 'Northeast');
+
+% Show F0
+
 
 guidat.hLineOn = [NaN, NaN, NaN];
 guidat.hLineEnd = [NaN, NaN, NaN];
