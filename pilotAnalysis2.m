@@ -118,24 +118,26 @@ end
 if ~isfile(matFileName)
     bNew = 1;
 else
-    a = input(sprintf('Found existing .mat file: %s. Resume data processing? (0/1): ', matFileName));
-    
-    if a == 1
-        bNew = 0;
-    elseif a == 0
-        a = input('Are you sure that you want to overwrite the existing data processing results? (y/n): ', 's');
-        if isequal(a, 'y')
-            bNew = 1;
-        elseif isequal(a, 'n')
-            bNew = 0;
-        else
-            error('Unrecognized input: %s', a);
-        end
-        
-        bNew = 1;
-    else
-        error('Unrecognized input: %d', a);
-    end
+%     a = input(sprintf('Found existing .mat file: %s. Resume data processing? (0/1): ', matFileName));
+%     
+%     if a == 1
+%         bNew = 0;
+%     elseif a == 0
+%         a = input('Are you sure that you want to overwrite the existing data processing results? (y/n): ', 's');
+%         if isequal(a, 'y')
+%             bNew = 1;
+%         elseif isequal(a, 'n')
+%             bNew = 0;
+%         else
+%             error('Unrecognized input: %s', a);
+%         end
+%         
+%         bNew = 1;
+%     else
+%         error('Unrecognized input: %d', a);
+%     end
+    fprintf('Found existing .mat file: %s. Resuming.\n', matFileName)
+    bNew = 0;
 end
     
 if length(testName) > 4 && isequal(testName(1 : 4), 'test') %--- test sessions ---%

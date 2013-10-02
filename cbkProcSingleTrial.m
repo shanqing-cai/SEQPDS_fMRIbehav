@@ -35,11 +35,42 @@ else
     play(ap, 1);
 end
 
-%GUI to classify--------------------        
-[hFig, hSpect, retVals] = SEQ_GUI(ysnd, fs, uihdls.recordTime, uihdls.audioMode, ...
-                                  '--stimWord', data{ii}.stimWord);
+%--- Find prior formant tracking settings ---%
+bFoundSW = 0; % Found same-word formant settings
+for iprev = [ii, setxor(length(data) : -1 : 1, ii)]
+    if data{iprev}.status == 1 && isequal(data{iprev}.stimWord, data{ii}.stimWord)
+        bFoundSW = 1;
+        break;
+    end
+end
+
+if bFoundSW
+    fmtOpts = data{iprev}.fmtOpts;
+else %--- Look for any word prior --- %
+    bFoundPrior = 0; % Found same-word formant settings
+    for iprev = length(data) : -1 : 1
+        if data{iprev}.status == 1
+            bFoundPrior = 1;
+            break;
+        end        
+    end
+    
+    if bFoundPrior
+        fmtOpts = data{iprev}.fmtOpts;
+    else
+        fmtOpts = [];
+    end
+end
+
+%--- GUI to classify and track pitch and formants ---%
+[hFig, hSpect, retVals] = SEQ_GUI(ysnd, fs, uihdls.recordTime, uihdls.audioMode, ...                                  
+                                  uihdls, ...
+                                  '--stimWord', data{ii}.stimWord, ...
+                                  '--fmtOpts', fmtOpts);
 
 % uiwait;
+
+tdata = load(uihdls.matFileName);
 
 %         buttonVals{1}
 %         buttonVals{2}
@@ -48,6 +79,18 @@ data{ii}.fluency = retVals.buttonVals{2};
 data{ii}.accuracyLowConfid = retVals.accuracyLowConfid;
 data{ii}.fluencyLowConfid = retVals.fluencyLowConfid;
 data{ii}.bStarter = retVals.bStarter;
+
+%--- Copy over pitch and formant information ---%
+data{ii}.fmtOpts = tdata.data{ii}.fmtOpts;
+
+data{ii}.f0_time = tdata.data{ii}.f0_time;
+data{ii}.f0 = tdata.data{ii}.f0;
+data{ii}.fmt_time = tdata.data{ii}.fmt_time;
+data{ii}.f1 = tdata.data{ii}.f1;
+data{ii}.f2 = tdata.data{ii}.f2;
+
+clear('tdata');
+%--- Copy over pitch and formant information ---%
 
 try
     close(hFig);
@@ -144,8 +187,8 @@ noverlap = 256; %samples
 nfft = 512; %samples
 %                         spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
 
-plot(retVals.f0_time, retVals.f0_value, 'k-');
-plot(retVals.fmt_time, [retVals.f1, retVals.f2], 'b-');
+plot(data{ii}.f0_time, data{ii}.f0, 'k-');
+plot(data{ii}.fmt_time, [data{ii}.f1, data{ii}.f2], 'b-');
 
 spectrogram(yvis, nwin, noverlap, nfft, fs, 'yaxis');
 ylim([0, 4000]);
@@ -346,7 +389,13 @@ end
 if ~isnan(data{ii}.accuracy) && ~isnan(data{ii}.fluency) ...
    && ~isnan(data{ii}.accuracyLowConfid) && ~isnan(data{ii}.fluencyLowConfid) ...
    && ~isempty(data{ii}.times) ...
-   && ~isnan(data{ii}.bStarter)
+   && ~isnan(data{ii}.bStarter) ...
+   && isfield(data{ii}, 'fmtOpts') ...
+   && isfield(data{ii}, 'f0_time') && ~isempty(data{ii}.f0_time) ...
+   && isfield(data{ii}, 'f0') && ~isempty(data{ii}.f0) ...
+   && isfield(data{ii}, 'fmt_time') && ~isempty(data{ii}.fmt_time) ...
+   && isfield(data{ii}, 'f1') && ~isempty(data{ii}.f1) ...
+   && isfield(data{ii}, 'f2') && ~isempty(data{ii}.f2);
     if (data{ii}.bStarter == 1 && ~isempty(data{ii}.starterOnset)) ...
        || data{ii}.bStarter == 0
         data{ii}.status = 1;

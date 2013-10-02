@@ -1,41 +1,51 @@
-function [hFig, hSpect, retVals] = SEQ_GUI(y, fs, recordTime, audioMode, varargin)
-%     global buttonVals done
-%     global accuracyLowConfid
-%     global fluencyLowConfid
-%     global bStarter
-    
-%     recordTime = 3;
+function [hFig, hSpect, retVals] = SEQ_GUI(y, fs, recordTime, audioMode, uihdls, varargin)
+    global buttonVals done
+    global accuracyLowConfid
+    global fluencyLowConfid
+    global bStarter
+    global errorBtnGrp
+    global fluentBtnGrp
 
-%% Pitch tracking    
-[f0_time, f0_value, SHR, f0_candidates] = shrp(y, fs, [50, 400]);
-f0_time = f0_time / 1e3;
+recordTime = 3;
 
-%% Formant tracking
-for i1 = 1 : 2
-    [fmt_time, f1, f2] = trackFmts(y, fs);
+%% Configuration
+NLPC_OPTIONS = [13, 15, 17, 19];
+NLPC_DEFAULT = 17;
+FN1_DEFAULT = 600;
+FN2_DEFAULT = 1800;
+
+ALPHA_DEFAULT = 2.0;
+BETA_DEFAULT = 0.8;
+GAMMA_DEFAULT = 1.0;
+
+%% Formant tracking options
+if ~isempty(fsic(varargin, '--fmtOpts'))
+    fmtOpts = varargin{fsic(varargin, '--fmtOpts') + 1};
+else
+    fmtOpts = [];
 end
 
 
 %%
-hSpect = figure('Visible', 'on', 'Menu','none', 'Name','Calculator', 'Resize','on', 'Position',[100 350 1000 200]);    
+ui.hSpect = figure('Visible', 'on', 'Menu','none', 'Name','Calculator', 'Resize','on', 'Position',[100 350 1000 200]);
 subplot('Position', [0.05, 0.2, 0.9, 0.775]);
-movegui(hSpect, 'northwest');
-show_spectrogram(y, fs, 'noFig');    
-xlabel('Time (s)');
-ylabel('Frequency (Hz)');
+movegui(ui.hSpect, 'northwest');
+% show_spectrogram(y, fs, 'noFig');
+% xlabel('Time (s)');
+% ylabel('Frequency (Hz)');
 
-% Show F0
-plot(f0_time, f0_value, 'k-');
-plot(fmt_time, [f1, f2], 'b-');
+% Show F0 and formants
+% plot(f0_time, f0_value, 'k-');
+% plot(fmt_time, [f1, f2], 'b-');
 
-hFig = figure('Visible','off', 'Menu','none', 'Name','Spectrogram', 'Resize','on', 'Position',[100 100 500 320]);    
-movegui(hFig, 'center');          %# Move the GUI to the center of the screen
+ui.hFig = figure('Visible','off', 'Menu','none', 'Name','Spectrogram', 'Resize','on', 'Position',[100 100 500 320]);    
+movegui(ui.hFig, 'center');          %# Move the GUI to the center of the screen
 
 if ~isempty(fsic(varargin, '--stimWord'))
     stimWord = varargin{fsic(varargin, '--stimWord') + 1};
 
-    set(hFig, 'Name', stimWord);
-    set(hSpect, 'Name', sprintf('Spectrogram: %s', stimWord));
+    set(ui.hFig, 'Name', stimWord);
+    set(ui.hSpect, 'Name', sprintf('Spectrogram: %s', stimWord));
 end
 
 errorBtnGrp = uibuttongroup('Position',[0 0.4 0.4 0.6], 'Units','Normalized','Title','ACCURACY');
@@ -63,15 +73,82 @@ starterGrp = uibuttongroup('Position',[0 0.0 0.8 0.2], 'Units','Normalized','Tit
 cb_starter = ...
     uicontrol('Style', 'Checkbox', 'Parent', starterGrp, 'HandleVisibility', 'off', 'Position', [15 5 160 30], 'String', 'Contains starter', 'Tag','fluent');
 
-uicontrol('Style','pushbutton', 'String','Play', 'Position',[420 120 60 50], 'Callback',{@button2_callback, audioMode})
-uicontrol('Style','pushbutton', 'String','Submit', 'Position',[420 35 60 50], 'Callback',{@button_callback})
+uicontrol('Style', 'pushbutton', 'String', 'Play', 'Position', [420 50 60 40], 'Callback', {@button2_callback, audioMode, y, fs});
+uicontrol('Style', 'pushbutton', 'String', 'Submit', 'Position', [420 5 60 40], 'Callback', {@button_callback});
 
-set(hFig, 'Visible','on')        %# Make the GUI visible
+%% UI Controls for formant tracking
+fmtTrackBtnGrp = uibuttongroup('Position',[0.8, 0.3, 0.195, 0.7], 'Units', 'Normalized', 'Title', 'Formants');
 
-%% callback function
+ui.lblNLPC = uicontrol('Style', 'text', 'Position', [420 290 60 20], ...
+                       'HorizontalAlignment', 'left', ...
+                       'String', 'LPC order: ');
+ui.pmNLPC = uicontrol('Style', 'popupmenu', 'Position', [420 270 60 20], ...
+                      'BackgroundColor', 'w');
+strNLPC = cell(1, 0);
+for i1 = 1 : numel(NLPC_OPTIONS);
+    strNLPC{end + 1} = sprintf('%d', NLPC_OPTIONS(i1));
+end
+idxDef = find(NLPC_OPTIONS == NLPC_DEFAULT, 1);
+set(ui.pmNLPC, 'String', strNLPC, 'Value', idxDef);
+
+if ~isempty(fmtOpts)
+    idx = find(NLPC_OPTIONS == fmtOpts.nLPC);
+    set(ui.pmNLPC, 'Value', idx);
+end
+
+ui.lblAFact = uicontrol('Style', 'text', 'Position', [420 240 60 20], ...
+                        'HorizontalAlignment', 'left', ...
+                        'String', 'DP alpha: ');
+ui.editAFact = uicontrol('Style', 'edit', 'Position', [420 220 60 20], ...
+                         'BackgroundColor', 'w', ...
+                         'HorizontalAlignment', 'left', ...
+                         'String', sprintf('%.1f', ALPHA_DEFAULT));
+if ~isempty(fmtOpts)
+    set(ui.editAFact, 'String', sprintf('%.1f', fmtOpts.aFact));
+end
+
+ui.lblFN1 = uicontrol('Style', 'text', 'Position', [420 190 70 20], ...
+                       'HorizontalAlignment', 'left', ...
+                      'String', 'F1 Prior (Hz): ');
+ui.editFN1 = uicontrol('Style', 'edit', 'Position', [420 170 60 20], ...
+                       'BackgroundColor', 'w', ...
+                       'HorizontalAlignment', 'left', ...
+                       'String', sprintf('%.1f', FN1_DEFAULT));
+if ~isempty(fmtOpts)
+    set(ui.editFN1, 'String', sprintf('%.1f', fmtOpts.fn1));
+end
+                   
+ui.lblFN2 = uicontrol('Style', 'text', 'Position', [420 140 70 20], ...\
+                      'HorizontalAlignment', 'left', ...
+                      'String', 'F2 Prior (Hz): ');
+ui.editFN2= uicontrol('Style', 'edit', 'Position', [420 120 60 20], ...
+                       'BackgroundColor', 'w', ...
+                       'HorizontalAlignment', 'left', ...
+                       'String', sprintf('%.1f', FN2_DEFAULT));
+if ~isempty(fmtOpts)
+    set(ui.editFN2, 'String', sprintf('%.1f', fmtOpts.fn2));
+end
+
+% Set callback functions
+set(ui.pmNLPC, 'Callback', {@formantCbk, y, fs, ui, uihdls});
+set(ui.editAFact, 'Callback', {@formantCbk, y, fs, ui, uihdls});
+set(ui.editFN1, 'Callback', {@formantCbk, y, fs, ui, uihdls});
+set(ui.editFN2, 'Callback', {@formantCbk, y, fs, ui, uihdls});
+
+set(ui.hFig, 'Visible', 'on')        %# Make the GUI visible
+
+
+%% Return values
+hSpect = ui.hSpect;
+hFig = ui.hFig;
+
+%% Track formant (initial)
+formantCbk([], [], y, fs, ui, uihdls);
+
+%% Callback functions
 function [returnVars] = button_callback(src, ev)
-    a = get(get(errorBtnGrp, 'SelectedObject'),'Tag');
-    b = get(get(fluentBtnGrp, 'SelectedObject'),'Tag');    
+    a = get(get(errorBtnGrp, 'SelectedObject'), 'Tag');
+    b = get(get(fluentBtnGrp, 'SelectedObject'), 'Tag');    
     
     switch a
         case 'accurate'
@@ -104,12 +181,12 @@ function [returnVars] = button_callback(src, ev)
     bStarter = get(cb_starter, 'Value');
 
 %     display('Submitting...');
-    done = 1;
+%     done = 1;
     close(gcbf);
 end
 
 %% play sound
-function [returnVars] = button2_callback(src, ev, audioMode)
+function [returnVars] = button2_callback(src, ev, audioMode, y, fs)
 %         if ~isempty(strfind(lower(getenv('OS')), 'windows'))
     if isequal(audioMode, 'soundsc')
 %         soundsc(y(1:round(recordTime*fs)), fs);
@@ -123,6 +200,7 @@ function [returnVars] = button2_callback(src, ev, audioMode)
     end
 end
 
+%%
 uiwait;
 
 %     global buttonVals done
@@ -137,10 +215,7 @@ retVals.accuracyLowConfid = accuracyLowConfid;
 retVals.fluencyLowConfid = fluencyLowConfid;
 retVals.bStarter = bStarter;
 
-retVals.f0_time = f0_time;
-retVals.f0_value = f0_value;
 
-retVals.fmt_time = fmt_time;
-retVals.f1 = f1;
-retVals.f2 = f2;
+
+%%
 end
