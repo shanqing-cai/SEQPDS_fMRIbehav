@@ -4,4 +4,29 @@ stim/
 *.asv
 Audapter.mex*
 
+*.[Oo]bj
+*.user
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+*.tlb
+*.tlh
+*.bak
+*.[Cc]ache
+*.ilk
+*.tlog
+*.log
+*.lib
+*.sbr
+*.sdf
+*.opensdf
+*.unsuccessfulbuild
+*.ncb
+*.suo
+ipch
+[Bb]in/
+[Dd]ebug*/
+[Rr]elease*/
+Ankh.NoLoad
 
