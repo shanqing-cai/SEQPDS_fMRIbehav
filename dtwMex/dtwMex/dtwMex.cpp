@@ -232,7 +232,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
 		return;
 	}
 
-	bool bVerbose = true;
+	bool bVerbose = false;
 
 	/* Sanity check on input spectrogram 1 */
 	int spec1NDims = static_cast<unsigned int>(mxGetNumberOfDimensions(prhs[0]));
