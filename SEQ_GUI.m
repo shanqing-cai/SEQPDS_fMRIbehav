@@ -161,7 +161,7 @@ function [returnVars] = button_callback(src, ev)
     end
     
     dateStr = datestr(now, 'yyyy-mm-ddTHH.MM.SS');
-    imageFN = fullfile(imageDir, sprintf('%s_%s_%s.jpg', trialNum, stimWord, dateStr));
+    imageFN = fullfile(imageDir, sprintf('%d_%s_%s.jpg', trialNum, stimWord, dateStr));
     
     set(0, 'CurrentFigure', ui.hSpect);
     saveas(gcf, imageFN, 'jpg');
