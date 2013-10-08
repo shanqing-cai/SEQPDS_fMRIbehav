@@ -48,6 +48,11 @@ if ~isempty(fsic(varargin, '--stimWord'))
     set(ui.hSpect, 'Name', sprintf('Spectrogram: %s', stimWord));
 end
 
+
+if ~isempty(fsic(varargin, '--trialNum'))
+    trialNum = varargin{fsic(varargin, '--trialNum') + 1};
+end
+
 errorBtnGrp = uibuttongroup('Position',[0 0.4 0.4 0.6], 'Units','Normalized','Title','ACCURACY');
 uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Accurate', 'Tag','accurate')
 uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Silence', 'Tag','silence')
@@ -147,6 +152,23 @@ formantCbk([], [], y, fs, ui, uihdls);
 
 %% Callback functions
 function [returnVars] = button_callback(src, ev)
+    %--- Write to image file ---%
+    [tdir, tfn] = fileparts(uihdls.matFileName);
+    imageDir = fullfile(tdir, 'images');
+    if ~isdir(imageDir)
+        mkdir(imageDir);
+        info_log(sprintf('Created directory for images: %s', imageDir))
+    end
+    
+    dateStr = datestr(now, 'yyyy-mm-ddTHH.MM.SS');
+    imageFN = fullfile(imageDir, sprintf('%s_%s_%s.jpg', trialNum, stimWord, dateStr));
+    
+    set(0, 'CurrentFigure', ui.hSpect);
+    saveas(gcf, imageFN, 'jpg');
+    
+    info_log(sprintf('Saved screenshot to image file: %s', imageFN));
+    
+    
     a = get(get(errorBtnGrp, 'SelectedObject'), 'Tag');
     b = get(get(fluentBtnGrp, 'SelectedObject'), 'Tag');    
     
@@ -183,6 +205,8 @@ function [returnVars] = button_callback(src, ev)
 %     display('Submitting...');
 %     done = 1;
     close(gcbf);
+    
+    
 end
 
 %% play sound
