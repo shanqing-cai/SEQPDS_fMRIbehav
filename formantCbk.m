@@ -76,7 +76,9 @@ plot(fmt_time, [f1, f2], 'b-');
 drawnow;
 
 %% 
-tidx = get(uihdls.trialListBox, 'Value');
+% tidx = get(uihdls.trialListBox, 'Value');
+tidx = get_curr_trial_index(uihdls.trialListBox);
+
 load(uihdls.matFileName);
 
 data{tidx}.fmtOpts = struct;
