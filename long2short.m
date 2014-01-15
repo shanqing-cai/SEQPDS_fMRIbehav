@@ -14,6 +14,21 @@ else
     nSkip = 0;
 end
 
+if ~isempty(fsic(varargin, '--skip-trials'))
+    if ~isempty(fsic(varargin, '--skip'))
+        error('Options --skip and --skip-trials are not allowed to be used simultaneously')
+    end
+    
+    skipTNs = varargin{fsic(varargin, '--skip-trials') + 1};
+    assert(~isempty(skipTNs));
+    
+    if length(skipTNs) ~= length(unique(skipTNs))
+        error('Skipped trial numbers are not unique');
+    end
+else
+    skipTNs = [];
+end
+
 %%
 dl = dir(fullfile(longDir, '*_test*.wav'));
 if isempty(dl)
@@ -107,12 +122,40 @@ for i1 = 1 : numel(dl)
 	drawnow;
              
     % -- Serially extract new short wav files -- %
-    for i2 = 1 + nSkip : numel(shtns)
+%     if ~isempty(skipTNs)
+%         origLen = length(shtns);
+%         shtns = setxor(shtns, skipTNs);
+%         if length(shtns) ~= origLen - length(skipTNs)
+%             error('Error during manual skipping of trials with the --skip-trials option. Either the trials numbers to be skipped are not unique, or they contain trial numbers that are not speech trials');
+%         end
+%     end
+    
+%     sidx = 1 + nSkip;
+    cumSkip = 0;
+    for i2 = 1 + nSkip : numel(shtns)                
+%         if ~isempty(find(skipTNs == i2, 1))
+%             sidx = sidx + 1;
+%         end
+        
         if nSkip == 0
             tn = shtns(i2);
         else
             tn = shtns(i2) - shtns(nSkip);
         end
+        
+        if ~isempty(find(skipTNs == tn, 1))
+            cumSkip = cumSkip + 1;
+        end
+        tn = tn + cumSkip;
+        
+        if tn + 1 > length(t_on)
+            fprintf(1, 'Warning: skipping trial %s due to skipped trigger(s)\n', shfns{i2});
+            continue;
+        end
+        
+%         if ~isempty(find(skipTNs == i2, 1))
+%             tn = tn + find(skipTNs <= i2);
+%         end
         
         idx0 = find(tAxis > t_off(tn) + shOnset, 1);
         idx1 = find(tAxis > t_off(tn) + shOnset + shDur, 1);
@@ -127,6 +170,8 @@ for i1 = 1 : numel(dl)
         
         outwfn = fullfile(outDir, shfns{i2});
         wavwrite(ws, fs, outwfn);
+        
+%         sidx = sidx + 1;
     end
 end
 
