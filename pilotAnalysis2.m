@@ -25,6 +25,21 @@ function pilotAnalysis2(specFileName, groupNum, subjName, testName, recordTime, 
 %     case 'st_block' = 4;
 %     case 'st_clust' = 5;
 
+%% Check host name and user name
+hostName = getHostName;
+
+[~, userName] = system('whoami');
+if ~isempty(strfind(userName, '\'))
+    userName = splitstring(userName, '\');
+    userName = deblank(userName{end});
+end
+
+if ~isequal(saveName, userName)
+    error('The save name you supplied (%s) differs from your user name (%s).', ...
+          saveName, userName);
+end
+
+%%
 global buttonVals
 global done
 global accuracyLowConfid
@@ -52,7 +67,7 @@ end
 screen_pts = get(0,'ScreenSize');
 pos = [screen_pts(1) screen_pts(2) screen_pts(3) screen_pts(4) - 45];
 
-specFile = strcat('specFiles\',specFileName,'.txt');
+specFile = fullfile('specFiles', [specFileName, '.txt']);
 [stimNums waits] = textread(specFile,'%d %d');
 %stim to be presented, file name under which recorded is saved, ISI
 clear waits;
@@ -82,7 +97,15 @@ speechOff = 0;
 iter = 1;
 term = 0;
 
-matFileName = strcat(subjName,'\trials_',testName,'_',saveName);
+
+if isequal(hostName, 'cns-pc30')
+    dataBaseDir = 'C:/DATA/SEQPDS';
+else
+    dataBaseDir = '.';
+end
+matFileName = fullfile(dataBaseDir, ...
+                       subjName, ['trials_', testName, '_', saveName]);
+
 if ~isequal(matFileName(end - 3 : end), '.mat')
     matFileName = [matFileName, '.mat'];
 end
@@ -205,7 +228,7 @@ if bNew
             data{ii}.stimWord = stimWord;
         end
 
-        data{ii}.recordFile = fullfile('.', subjName, ...
+        data{ii}.recordFile = fullfile(dataBaseDir, subjName, ...
                                        sprintf('%s_%d_%s.wav', testName, ii, data{ii}.stimWord));
 
         %-- Initialize data --%
