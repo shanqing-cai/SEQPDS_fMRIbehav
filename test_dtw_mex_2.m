@@ -4,7 +4,8 @@ function test_dtw_mex_2
 % matFileName = 'SEQ04P18_behavioral\trials_test1_scai2.mat';
 % matFileName = 'SEQ04P18_behavioral\trials_test4_scai2.mat';
 % matFileName = 'SEQ04P18_behavioral\trials_test8_scai2.mat';
-matFileName = 'SEQ03P13_behavioral\trials_test1_scai30.mat';
+% matFileName = 'SEQ03P13_behavioral\trials_test1_scai30.mat';
+matFileName = 'C:\DATA\SEQPDS\SEQ03P13_behavioral\trials_test1_scai30.mat';
 
 %--- SPLERST ---%
 % trialNum1 = 1;
@@ -43,7 +44,6 @@ wavFN1 = data{trialNum1}.recordFile;
 
 taxis1 = 0 : (1 / fs1) : (1 / fs1) * length(w1);
 w1 = w1(taxis1 > data{trialNum1}.times(2) & taxis1 < data{trialNum1}.times(3));
-
 
 %% Load the stim file
 stimWC = fullfile(stimDir, ['*_', stimWord, '.wav']);
