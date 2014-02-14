@@ -245,6 +245,9 @@ uihdls.bFilt = bFilt;
 uihdls.audioMode = audioMode;
 uihdls.recordTime = recordTime;
 uihdls.pos = pos;
+uihdls.dataBaseDir = dataBaseDir;
+uihdls.subjName = subjName;
+uihdls.testName = testName;
 
 set(uihdls.btnProc, 'Callback', {@cbkProcSingleTrial, uihdls});
 

@@ -1,4 +1,4 @@
-function dtw_wrapper(inWavFN, procMatFN, varargin)
+function warpAlign = dtw_wrapper(inWavFN, procMatFN, varargin)
 %% Config
 TEMPLATE_DIR = 'stim';
 YMax = 4000;
@@ -78,8 +78,11 @@ assert(exist('segInfo', 'var') == 1);
 %% Call core MEX
 warpAlign = dtw(w, fs, t0, t1, wt, fst, segInfo);
 
+warpAlign.segNames = segInfo.segNames;
+warpAlign.segHostName = deblank(segInfo.hostName);
+warpAlign.segTimeStamp = deblank(segInfo.timeStamp);
 warpAlign.tBeg = warpAlign.tBeg + t0;
-warpAlign.tEnd = warpAlign.tEnd + t1;
+warpAlign.tEnd = warpAlign.tEnd + t0;
 
 %%
 if ~isempty(fsic(varargin, '--show'))

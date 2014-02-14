@@ -33,6 +33,14 @@ for i1 = 1 : length(data)
        && isfield(data{i1}, 'f2') && ~isempty(data{i1}.f2);
         listItems{end} = [listItems{end}, ' [F0,Fmt done]'];
     end
+    
+    if isfield(data{i1}, 'warpAlign') ...
+        && isfield(data{i1}.warpAlign, 'segNames') && isfield(data{i1}.warpAlign, 'tBeg') ...
+        && isfield(data{i1}.warpAlign, 'tEnd') && isfield(data{i1}.warpAlign, 'segHostName') ...
+        && isfield(data{i1}.warpAlign, 'segTimeStamp')
+        listItems{end} = [listItems{end}, ' [dtw done]'];
+    end
+    
 end
 set(uihdls.trialListBox, 'string', listItems);
 

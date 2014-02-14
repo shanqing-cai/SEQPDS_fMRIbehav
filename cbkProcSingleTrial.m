@@ -1,5 +1,8 @@
 function cbkProcSingleTrial(src, evntDat, uihdls, varargin)
-%% Get trial number
+%% Config
+dtwClr = [1, 0, 1];
+
+%% Get trial number and name
 [ii, listTrialNums] = get_curr_trial_index(uihdls.trialListBox);
 
 %%
@@ -208,6 +211,10 @@ guidat.hLineOn = [NaN, NaN, NaN];
 guidat.hLineEnd = [NaN, NaN, NaN];
 guidat.hLineStarter = [NaN, NaN, NaN];
 
+guidat.dtwLines = [];
+guidat.dtwTxt = [];
+guidat.dtwInfoTxt = [];
+
 if data{ii}.accuracy == 2 || data{ii}.accuracy == 4 % Silence or Unusable (unrecognizable) --> no onset / offset labeling is necessary
     set(gcf, 'CurrentAxes', guidat.hsp1);
     title('No onset / offset labeling is needed since this trial is marked as silence or unusable', 'Color', 'k', 'FontSize', 14);
@@ -225,9 +232,8 @@ else
         end
         
         
-        
         switch accept
-            case 1
+            case 1 % Take the current results and proceed
                 flagEndFound = 1;
                 if ~isfield(data{ii}, 'times') || isempty(data{ii}.times)
                     if speechOn == 1 && speechOff == 1
@@ -239,7 +245,7 @@ else
                 end
                 break;
 
-            case 2
+            case 2 % Label the onset and offset 
                 flagEndFound = 1;
 
                 bTimeLabelsOkay = 0;
@@ -264,6 +270,19 @@ else
                         if ~isnan(guidat.hLineEnd(j0))
                             delete(guidat.hLineEnd(j0));
                         end
+                    end
+                    for j0 = 1 : numel(guidat.dtwLines)
+                        if ~isnan(guidat.dtwLines(j0))
+                            delete(guidat.dtwLines(j0));
+                        end
+                    end
+                    for j0 = 1 : numel(guidat.dtwTxt)
+                        if ~isnan(guidat.dtwTxt(j0))
+                            delete(guidat.dtwTxt(j0));
+                        end
+                    end
+                    if ~isempty(guidat.dtwInfoTxt) && ~isnan(guidat.dtwInfoTxt)
+                        delete(guidat.dtwInfoTxt);
                     end
 
                     % -- Optional: starter -- %                                            
@@ -334,16 +353,60 @@ else
                         title('', 'Color', 'b'); drawnow;
                     end
                 end
-
-%                                 strResp_on = input('Enter the onset time (in secs) and type Enter\n', 's');
-%                                 strResp_end = input('Enter the offset time (in secs) and type Enter\n', 's');                               
-%                                 numResp_on = str2double(strResp_on);
-%                                 numResp_end = str2double(strResp_end);
-
+                
                 if isfield(data{ii}, 'bStarter') && data{ii}.bStarter == 1
                     data{ii}.starterOnset = numResp_starter;
                 end
                 data{ii}.times = [ii numResp_on numResp_end];
+                save(uihdls.matFileName, 'data');
+                
+                %--- Perform dynamic time warping (dtw) ---%
+                warpAlign = dtw_wrapper(data{ii}.recordFile, uihdls.matFileName);
+                dtwInfoStr = sprintf('DTW template generated on %s at %s', ...
+                                     warpAlign.segHostName, warpAlign.segTimeStamp);
+                                 
+                data{ii}.warpAlign = warpAlign;
+                save(uihdls.matFileName, 'data');
+                
+                %-- Display dtw results --%
+                guidat.dtwLines = nan(3, length(warpAlign.tBeg) + 1);
+                guidat.dtwTxt = nan(3, length(warpAlign.tBeg));
+                
+                for i0 = 1 : 3
+                    if i0 == 1
+                        set(gcf, 'CurrentAxes', guidat.hsp1);
+                    elseif i0 == 2
+                        set(gcf, 'CurrentAxes', guidat.hsp2);
+                    else
+                        set(gcf, 'CurrentAxes', guidat.hsp3);
+                    end
+                    
+                    xs = get(gca, 'XLim'); ys = get(gca, 'YLim');
+                    for i1 = 1 : length(warpAlign.segNames)
+                        guidat.dtwLines(i0, i1) = ...
+                            plot(repmat(warpAlign.tBeg(i1), 1, 2), ...
+                                 ys, '-', 'Color', dtwClr);
+                        tFrac = 0.5;
+                        guidat.dtwTxt(i0, i1) = ...
+                            text(warpAlign.tBeg(i1) * tFrac + warpAlign.tEnd(i1) * (1 - tFrac), ...
+                                 ys(2) - 0.05 * (ys(2) - ys(1)), warpAlign.segNames{i1}, ...
+                                 'Color', dtwClr);
+
+                         if i1 == length(warpAlign.segNames)
+                            guidat.dtwLines(i0, end) = ...
+                                plot(repmat(warpAlign.tEnd(i1), 1, 2), ...
+                                     ys, '-', 'Color', dtwClr);
+                         end
+                    end
+                    
+                    if i0 == 1
+                        guidat.dtwInfoTxt = text(xs(1) + 0.01 * (xs(2) - xs(1)), ...
+                                                 ys(1) + 0.05 * (ys(2) - ys(1)), ...
+                                                 dtwInfoStr);
+                    end
+                    set(gca, 'XLim', xs, 'YLim', ys);
+                end
+                
             case 3 % Select and play
                 set(0, 'CurrentFigure', guidat.hfig);
                 set(gcf, 'CurrentAxes', guidat.hsp1);
