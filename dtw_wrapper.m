@@ -40,7 +40,7 @@ if ~isequal(datWavF, inWavF)
 end
 
 if length(data{trialNum}.times) ~= 3
-    error('Unexpected length in data{%d}.times', trialNum);
+    error('Unexpected length in data{%d}.times, possibly due to incomplete preprocessing.', trialNum);
 end
 t0 = data{trialNum}.times(2);
 t1 = data{trialNum}.times(3);
