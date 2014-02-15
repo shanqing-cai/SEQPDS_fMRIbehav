@@ -60,7 +60,7 @@ if data{ii}.status == 1
         curr_ii = mod(init_ii, length(listTrialNums)) + 1;
 
         bFoundUnfinished = 0;
-        while curr_ii ~= init_ii
+        while (curr_ii ~= init_ii) && (ii < length(listTrialNums))
             if data{listTrialNums(curr_ii)}.status == 0
                 bFoundUnfinished = 1;
 
