@@ -1,0 +1,4 @@
+TODO: 
+	1. Display previous results in cbkProcSingleTrial.m
+	2. Display previous results in pilotAnalysis2.m
+	3. Manual adjustment of dtw results in cbkProcSingleTrial.m
