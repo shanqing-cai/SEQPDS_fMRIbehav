@@ -39,32 +39,38 @@ else
 end
 
 %--- Find prior formant tracking settings ---%
-bFoundSW = 0; % Found same-word formant settings
-% for iprev = [ii, setxor(length(data) : -1 : 1, ii)]
-for iprev = [ii, setxor(fliplr(listTrialNums), ii)];
-    if data{iprev}.status == 1 && isequal(data{iprev}.stimWord, data{ii}.stimWord)
-        bFoundSW = 1;
-        break;
-    end
-end
-
-if bFoundSW
-    fmtOpts = data{iprev}.fmtOpts;
-else %--- Look for any word prior --- %
-    bFoundPrior = 0; % Found same-word formant settings
-%     for iprev = length(data) : -1 : 1
-    for iprev = fliplr(listTrialNums)
-        if data{iprev}.status == 1
-            bFoundPrior = 1;
-            break;
-        end        
-    end
+if isfield(data{ii}, 'fmtOpts') && ~isempty(data{ii}.fmtOpts)
+    fmtOpts = data{ii}.fmtOpts;
     
-    if bFoundPrior
-        fmtOpts = data{iprev}.fmtOpts;
-    else
-        fmtOpts = [];
+else
+    bFoundSW = 0; % Found same-word formant settings
+    % for iprev = [ii, setxor(length(data) : -1 : 1, ii)]
+    for iprev = [ii, setxor(fliplr(listTrialNums), ii)];
+        if data{iprev}.status == 1 && isequal(data{iprev}.stimWord, data{ii}.stimWord)
+            bFoundSW = 1;
+            break;
+        end
     end
+
+    if bFoundSW
+        fmtOpts = data{iprev}.fmtOpts;
+    else %--- Look for any word prior --- %
+        bFoundPrior = 0; % Found same-word formant settings
+    %     for iprev = length(data) : -1 : 1
+        for iprev = fliplr(listTrialNums)
+            if data{iprev}.status == 1
+                bFoundPrior = 1;
+                break;
+            end        
+        end
+
+        if bFoundPrior
+            fmtOpts = data{iprev}.fmtOpts;
+        else
+            fmtOpts = [];
+        end
+    end
+
 end
 
 %--- GUI to classify and track pitch and formants ---%
@@ -72,7 +78,8 @@ end
                                   uihdls, ...
                                   '--stimWord', data{ii}.stimWord, ...
                                   '--fmtOpts', fmtOpts, ...
-                                  '--trialNum', ii);
+                                  '--trialNum', ii, ...
+                                  '--data', data{ii});
 
 % uiwait;
 

@@ -1,5 +1,5 @@
 function [hFig, hSpect, retVals] = SEQ_GUI(y, fs, recordTime, audioMode, uihdls, varargin)
-    global buttonVals done
+    global buttonVals done    
     global accuracyLowConfid
     global fluencyLowConfid
     global bStarter
@@ -54,19 +54,20 @@ if ~isempty(fsic(varargin, '--trialNum'))
 end
 
 errorBtnGrp = uibuttongroup('Position',[0 0.4 0.4 0.6], 'Units','Normalized','Title','ACCURACY');
-uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Accurate', 'Tag','accurate')
-uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Silence', 'Tag','silence')
-uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Error, Use', 'Tag','error_use')
-uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  60 135 30], 'String','Error, Unrecognizable', 'Tag','error_unrecog')
-uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Error, Unfinished', 'Tag','error_unfinish')
-
+errorBtns = nan(1, 5);
+errorBtns(1) = uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Accurate', 'Tag','accurate');
+errorBtns(2) = uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Silence', 'Tag','silence');
+errorBtns(3) = uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Error, Use', 'Tag','error_use');
+errorBtns(4) = uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  60 135 30], 'String','Error, Unrecognizable', 'Tag','error_unrecog');
+errorBtns(5) = uicontrol('Style','Radio', 'Parent',errorBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Error, Unfinished', 'Tag','error_unfinish');
 
 fluentBtnGrp = uibuttongroup('Position',[.4 0.4 0.4 0.6], 'Units','Normalized','Title','FLUENCY');
-uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Fluent', 'Tag','fluent')
-uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Stutter, Rep', 'Tag','st_rep')
-uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Stutter, Prolong', 'Tag','st_pro')
-uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  60 135 30], 'String','Stutter, Mid-word block', 'Tag','st_block')
-uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Stutter, Cluster', 'Tag','st_clust')
+fluentBtns = nan(1, 5);
+fluentBtns(1) = uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15 150 135 30], 'String','Fluent', 'Tag','fluent');
+fluentBtns(2) = uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15 120 135 30], 'String','Stutter, Rep', 'Tag','st_rep');
+fluentBtns(3) = uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  90 135 30], 'String','Stutter, Prolong', 'Tag','st_pro');
+fluentBtns(4) = uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  60 135 30], 'String','Stutter, Mid-word block', 'Tag','st_block');
+fluentBtns(5) = uicontrol('Style','Radio', 'Parent',fluentBtnGrp, 'HandleVisibility','off', 'Position',[15  30 135 30], 'String','Stutter, Cluster', 'Tag','st_clust');
 
 confidenceGrp = uibuttongroup('Position',[0 0.2 0.8 0.2], 'Units','Normalized','Title','RATING CONFIDENCE');
 cb_lowConfid_accuracy = ...
@@ -140,8 +141,50 @@ set(ui.editAFact, 'Callback', {@formantCbk, y, fs, ui, uihdls});
 set(ui.editFN1, 'Callback', {@formantCbk, y, fs, ui, uihdls});
 set(ui.editFN2, 'Callback', {@formantCbk, y, fs, ui, uihdls});
 
-set(ui.hFig, 'Visible', 'on')        %# Make the GUI visible
+%% Display previous results
+if ~isempty(fsic(varargin, '--data'))
+    t_data = varargin{fsic(varargin, '--data') + 1};
 
+    if isfield(t_data, 'accuracy') && ~isempty(t_data.accuracy) && ~isnan(t_data.accuracy)
+        set(errorBtnGrp, 'SelectedObject', errorBtns(t_data.accuracy));
+    end
+
+    if isfield(t_data, 'fluency') && ~isempty(t_data.fluency) && ~isnan(t_data.fluency)
+        set(fluentBtnGrp, 'SelectedObject', fluentBtns(t_data.fluency));
+    end
+    
+    if isfield(t_data, 'accuracyLowConfid') && ~isempty(t_data.accuracyLowConfid) && ~isnan(t_data.accuracyLowConfid)
+        set(cb_lowConfid_accuracy, 'Value', t_data.accuracyLowConfid);
+    end
+    
+    if isfield(t_data, 'accuracyLowConfid') && ~isempty(t_data.fluencyLowConfid) && ~isnan(t_data.fluencyLowConfid)
+        set(cb_lowConfid_fluency, 'Value', t_data.fluencyLowConfid);
+    end
+    
+    if isfield(t_data, 'bStarter') && ~isempty(t_data.bStarter) && ~isnan(t_data.bStarter)
+        set(cb_starter, 'Value', t_data.bStarter);
+    end
+    
+    if isfield(t_data, 'fmtOpts')
+        if isfield(t_data.fmtOpts, 'nLPC')
+            set(ui.pmNLPC, 'Value', find(NLPC_OPTIONS == t_data.fmtOpts.nLPC, 1));
+        end
+        
+        if isfield(t_data.fmtOpts, 'aFact')
+            set(ui.editAFact, 'String', sprintf('%.1f', t_data.fmtOpts.aFact));
+        end
+        
+        if isfield(t_data.fmtOpts, 'fn1')
+            set(ui.editFN1, 'String', sprintf('%.1f', t_data.fmtOpts.fn1));
+        end
+        
+        if isfield(t_data.fmtOpts, 'fn2')
+            set(ui.editFN2, 'String', sprintf('%.1f', t_data.fmtOpts.fn2));
+        end
+    end
+end
+
+set(ui.hFig, 'Visible', 'on')        %# Make the GUI visible
 
 %% Return values
 hSpect = ui.hSpect;
@@ -208,6 +251,7 @@ function [returnVars] = button_callback(src, ev)
     
     
 end
+
 
 %% play sound
 function [returnVars] = button2_callback(src, ev, audioMode, y, fs)
