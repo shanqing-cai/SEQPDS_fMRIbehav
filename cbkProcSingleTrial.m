@@ -198,7 +198,6 @@ guidat.hsp3 = subplot(3, 1, 3); hold on;
 nwin = 512; % samples
 noverlap = 256; %samples
 nfft = 512; %samples
-%                         spectrogram(y_orig, nwin, noverlap, nfft, fs, 'yaxis');
 
 plot(data{ii}.f0_time, data{ii}.f0, 'k-');
 plot(data{ii}.fmt_time, [data{ii}.f1, data{ii}.f2], 'b-');
@@ -210,17 +209,18 @@ legend({'F0', 'F1 & F2'}, 'Location', 'Northeast');
 
 % Show F0
 
-
 guidat.hLineOn = [NaN, NaN, NaN];
 guidat.hLineEnd = [NaN, NaN, NaN];
 guidat.hLineStarter = [NaN, NaN, NaN];
-
 guidat.dtwLines = [];
 guidat.dtwTxt = [];
 guidat.dtwInfoTxt = [];
-
+guidat.dtwLinesMan = [];
+guidat.dtwManLbl = [];
 guidat.dtwManualOnset = [NaN, NaN, NaN];
 guidat.dtwManualOnsetLbl = [];
+
+guidat.hComment = [];
 
 guidat = disp_label_dtw(guidat, uihdls, data, ii);
 
@@ -257,7 +257,7 @@ else
                 end
                 break;
 
-            case 2 % Label the onset and offset
+            case 2 % Label the onset and offset                
                 bTimeLabelsOkay = 0;
                 tmpHdls = [];
                 while ~bTimeLabelsOkay
@@ -332,7 +332,7 @@ else
                 %%--- Perform dynamic time warping (dtw) ---%%
                 warpAlign = dtw_wrapper(data{ii}.recordFile, uihdls.matFileName);
 
-                data{ii}.warpAlign = warpAlign;
+                data{ii}.warpAlign = warpAlign;                
                 save(uihdls.matFileName, 'data');
 
                 %-- Display labeling and dtw results --%
@@ -343,6 +343,19 @@ else
                     end
                 end
                 tmpHdls = [];
+                
+                guidat.hLineOn = [NaN, NaN, NaN];
+                guidat.hLineEnd = [NaN, NaN, NaN];
+                guidat.hLineStarter = [NaN, NaN, NaN];
+                guidat.dtwLines = [];
+                guidat.dtwTxt = [];
+                guidat.dtwInfoTxt = [];
+                guidat.dtwLinesMan = [];
+                guidat.dtwManLbl = [];
+                guidat.dtwManualOnset = [NaN, NaN, NaN];
+                guidat.dtwManualOnsetLbl = [];
+                guidat.hComment = [];
+                
                 guidat = disp_label_dtw(guidat, uihdls, data, ii);
                 
             case 3 % Select and play
@@ -408,6 +421,7 @@ else
                         title('', 'Color', 'b');
                     end                   
                 end
+                title('', 'Color', 'b');
                 
                 data{ii}.manualDTWOnset = crd(1);
                 save(uihdls.matFileName, 'data');
@@ -444,14 +458,105 @@ else
                     continue;
                 end
                 
+                %-- Prepare menu --%
+                phnSelCmd = 'phnSel = menu(''Select label to adjust'', ';
+                lblNames = cell(size(data{ii}.warpAlign.segNames));
+                for i1 = 1 : length(data{ii}.warpAlign.segNames)
+                    lblNames{i1} = strcat(data{ii}.warpAlign.segNames{i1}, '-onset');
+                    phnSelCmd = strcat(phnSelCmd, '''', lblNames{i1}, ''', ');
+                    if i1 == length(data{ii}.warpAlign.segNames)
+                        lblNames{i1 + 1} = strcat(data{ii}.warpAlign.segNames{i1}, '-end');
+                        phnSelCmd = strcat(phnSelCmd, sprintf('''%s-end'', ', data{ii}.warpAlign.segNames{i1}));
+                    end
+                end
+                phnSelCmd = strcat(phnSelCmd(1 : end - 2), ''', ''Cancel'');');
+                eval(phnSelCmd);
+                
+                if phnSel > length(lblNames)
+                    continue; % Cancel
+                end
+                
+                phnName = lblNames{phnSel};
+                
+                set(0, 'CurrentFigure', guidat.hfig);
+                set(gcf, 'CurrentAxes', guidat.hsp1);
+                title(sprintf('Click at the time of %s...', phnName));
+                crd = ginput(1);
+                
+                if ~isfield(data{ii}.warpAlign, 'manTBeg')
+                    data{ii}.warpAlign.manTBeg = nan(size(data{ii}.warpAlign.tBeg));
+                    data{ii}.warpAlign.manTEnd = nan(size(data{ii}.warpAlign.tEnd));
+                end
+                title('');
+                
+                if phnSel == numel(lblNames) % Labeling the last element: end of the last phone
+                    data{ii}.warpAlign.manTEnd(end) = crd(1);
+                else
+                    data{ii}.warpAlign.manTBeg(phnSel) = crd(1);
+                end
+                
+                save(uihdls.matFileName, 'data');
+                guidat = disp_label_dtw(guidat, uihdls, data, ii);
+                
             case 7 % Cancel manually adjusted DTW label
                 if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
                     msgbox('Error: DTW has not been performed yet.', 'ERROR', 'error', 'modal');
                     continue;
                 end
                 
+                if ~isfield(data{ii}.warpAlign, 'manTBeg')
+                    msgbox('Error: no manually adjusted DTW label was found.', 'error', 'modal');
+                    continue;
+                end
+                
+                %-- Prepare menu --%
+                phnSelCmd = 'phnSel = menu(''Select label to delete'', ';
+                lblNames = {};
+                lblPos = [];
+                for i1 = 1 : length(data{ii}.warpAlign.manTBeg)
+                    if ~isnan(data{ii}.warpAlign.manTBeg(i1))
+                        lblNames{end + 1} = strcat(data{ii}.warpAlign.segNames{i1}, '-onset');
+                        lblPos(end + 1) = i1;
+                        
+                        phnSelCmd = strcat(phnSelCmd, '''', lblNames{end}, ''', ');
+                    end
+                end
+                if ~isnan(data{ii}.warpAlign.manTEnd(end))
+                    lblNames{end + 1} = strcat(data{ii}.warpAlign.segNames{end}, '-end');
+                    lblPos(end + 1) = numel(data{ii}.warpAlign.manTEnd) + 1;
+                    
+                    phnSelCmd = strcat(phnSelCmd, '''', lblNames{end}, ''', ');
+                end
+                
+                phnSelCmd = strcat(phnSelCmd, '''Cancel'');');
+                eval(phnSelCmd);
+                
+                if phnSel > length(lblNames)
+                    continue; % Cancel
+                else
+                    phnName = lblNames{phnSel};
+                    if length(phnName) > 4 && isequal(phnName(end - 3 : end), '-end')
+                        data{ii}.warpAlign.manTEnd(end) = NaN;
+                    else
+                        data{ii}.warpAlign.manTBeg(lblPos(phnSel)) = NaN;
+                    end
+                end
+                
+                save(uihdls.matFileName, 'data');
+                guidat = disp_label_dtw(guidat, uihdls, data, ii);
+                
             case 8 % Add / Edit comment
-
+                if ~isfield(data{ii}, 'comment')
+                    data{ii}.comment = '';
+                end
+                
+                data{ii}.comment = inputdlg('Comment:', 'Comment', 1, {data{ii}.comment});
+                if iscell(data{ii}.comment)
+                    data{ii}.comment = data{ii}.comment{1};
+                end
+                
+                save(uihdls.matFileName, 'data');
+                guidat = disp_label_dtw(guidat, uihdls, data, ii);
         end
     end
 end

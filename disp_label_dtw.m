@@ -1,7 +1,9 @@
 function guidat = disp_label_dtw(guidat, uihdls, data, ii, varargin)
 %% Config
 dtwClr = [1, 0, 1];
-
+errClr = [1, 0, 0];
+tFrac = 0.5;
+fontSize = 12;
 
 %% Clean up display
 for j0 = 1 : length(guidat.hLineStarter)
@@ -24,6 +26,16 @@ for j0 = 1 : numel(guidat.dtwLines)
         delete(guidat.dtwLines(j0));
     end
 end
+for j0 = 1 : numel(guidat.dtwLinesMan)
+    if ~isnan(guidat.dtwLinesMan(j0))
+        delete(guidat.dtwLinesMan(j0));
+    end
+end
+for j0 = 1 : numel(guidat.dtwManLbl)
+    if ~isnan(guidat.dtwManLbl(j0))
+        delete(guidat.dtwManLbl(j0));
+    end
+end
 for j0 = 1 : numel(guidat.dtwTxt)
     if ~isnan(guidat.dtwTxt(j0))
         delete(guidat.dtwTxt(j0));
@@ -40,6 +52,10 @@ for j0 = 1 : numel(guidat.dtwManualOnset)
 end
 if ~isempty(guidat.dtwManualOnsetLbl) && ~isnan(guidat.dtwManualOnsetLbl)
     delete(guidat.dtwManualOnsetLbl);
+end
+
+if ~isempty(guidat.hComment)
+    delete(guidat.hComment);
 end
 
 if ~isempty(fsic(varargin, '--clean-up-only'))
@@ -94,9 +110,19 @@ if isfield(data{ii}, 'warpAlign') && isfield(data{ii}.warpAlign, 'segNames') ...
 
     dtwInfoStr = sprintf('DTW template generated on %s at %s', ...
                          data{ii}.warpAlign.segHostName, data{ii}.warpAlign.segTimeStamp);
+                     
+    if (isfield(data{ii}.warpAlign, 'manTBeg') && isfield(data{ii}.warpAlign, 'manTEnd') ...
+        && (~isempty(find(~isnan(data{ii}.warpAlign.manTBeg), 1)) || ...
+            ~isempty(find(~isnan(data{ii}.warpAlign.manTEnd), 1)))) ...
+       || (isfield(data{ii}, 'manualDTWOnset') && ~isnan(data{ii}.manualDTWOnset))
+        dtwInfoStr = strcat(dtwInfoStr, ' (contains manual adjustment)');
+    end
 
     guidat.dtwLines = nan(3, length(data{ii}.warpAlign.tBeg) + 1);
     guidat.dtwTxt = nan(3, length(data{ii}.warpAlign.tBeg));
+    
+    guidat.dtwLinesMan = [];
+    guidat.dtwManLbl = [];        
                      
     set(0, 'CurrentFigure', guidat.hfig);
     for i0 = 1 : 3
@@ -110,6 +136,15 @@ if isfield(data{ii}, 'warpAlign') && isfield(data{ii}.warpAlign, 'segNames') ...
 
         xs = get(gca, 'XLim'); ys = get(gca, 'YLim');
         
+        if i0 == 1 && isfield(data{ii}, 'comment') && ~isempty(data{ii}.comment) % Show comment
+            xs = get(gca, 'XLim'); ys = get(gca, 'YLim');
+            guidat.hComment = text(xs(1) + 0.01 * (xs(2) - xs(1)), ...
+                                   ys(1) + 0.15 * (ys(2) - ys(1)), ...
+                                   sprintf('Comments: "%s"', data{ii}.comment), 'Color', 'b', 'FontSize', fontSize);
+        else
+            guidat.hComment = [];
+        end
+        
         % Draw DTW manual onset 
         if isfield(data{ii}, 'manualDTWOnset')
             guidat.dtwManualOnset(i0) = plot(repmat(data{ii}.manualDTWOnset, 1, 2), ...
@@ -118,32 +153,80 @@ if isfield(data{ii}, 'warpAlign') && isfield(data{ii}.warpAlign, 'segNames') ...
                 guidat.dtwManualOnsetLbl = text(data{ii}.manualDTWOnset, ys(2) + 0.05 * (ys(2) - ys(1)), ...
                                                 'Manual DTW onset', 'Color', dtwClr, 'FontWeight', 'bold');
             end
+        else
+            guidat.dtwManualOnset = nan(size(guidat.dtwManualOnset));
+            guidat.dtwManualOnsetLbl = nan(size(guidat.dtwManualOnsetLbl));
         end
         
-        for i1 = 1 : length(data{ii}.warpAlign.segNames)
+        for i1 = 1 : length(data{ii}.warpAlign.segNames) + 1
+            if i1 <= length(data{ii}.warpAlign.segNames)
+                auto_t = data{ii}.warpAlign.tBeg(i1);
+                if ~isfield(data{ii}.warpAlign, 'manTBeg')
+                    man_t = NaN;
+                else
+                    man_t = data{ii}.warpAlign.manTBeg(i1);
+                end
+            else
+                auto_t = data{ii}.warpAlign.tEnd(end);
+                if ~isfield(data{ii}.warpAlign, 'manTEnd')
+                    man_t = NaN;
+                else
+                    man_t = data{ii}.warpAlign.manTEnd(end);
+                end
+            end
+            if ~isnan(man_t)
+                lta = '--';
+                if i1 <= length(data{ii}.warpAlign.tEnd)
+                    txtX = man_t * tFrac + data{ii}.warpAlign.tEnd(i1) * (1 - tFrac);
+                end
+                %-- Draw the manually adjusted label --%
+                guidat.dtwLinesMan(end + 1) = plot(repmat(man_t, 1, 2), ys, '-', 'Color', dtwClr);
+                guidat.dtwLinesMan(end + 1) = plot([auto_t, man_t], repmat(ys(2) - 0.1 * (ys(2) - ys(1)), 1, 2), '-', 'Color', dtwClr);
+                guidat.dtwManLbl(end + 1) = text(man_t, ys(1) - 0.05 * (ys(2) - ys(1)), 'M', ...
+                                                 'Color', dtwClr, 'FontWeight', 'Bold');
+            else
+                lta = '-';
+                if i1 <= length(data{ii}.warpAlign.tEnd)
+                    txtX = auto_t * tFrac + data{ii}.warpAlign.tEnd(i1) * (1 - tFrac);
+                end
+            end
+            
             guidat.dtwLines(i0, i1) = ...
-                plot(repmat(data{ii}.warpAlign.tBeg(i1), 1, 2), ...
-                     ys, '-', 'Color', dtwClr);
-            tFrac = 0.5;
-            guidat.dtwTxt(i0, i1) = ...
-                text(data{ii}.warpAlign.tBeg(i1) * tFrac + data{ii}.warpAlign.tEnd(i1) * (1 - tFrac), ...
-                     ys(2) - 0.05 * (ys(2) - ys(1)), data{ii}.warpAlign.segNames{i1}, ...
-                     'Color', dtwClr);
-
-             if i1 == length(data{ii}.warpAlign.segNames)
-                guidat.dtwLines(i0, end) = ...
-                    plot(repmat(data{ii}.warpAlign.tEnd(i1), 1, 2), ...
-                         ys, '-', 'Color', dtwClr);
-             end
+                plot(repmat(auto_t, 1, 2), ...
+                     ys, lta, 'Color', dtwClr);
+                 
+            if i1 <= length(data{ii}.warpAlign.tEnd)
+                guidat.dtwTxt(i0, i1) = ...
+                        text(txtX, ys(2) - 0.05 * (ys(2) - ys(1)), data{ii}.warpAlign.segNames{i1}, ...
+                             'Color', dtwClr);
+            end
+            
+%              if i1 == length(data{ii}.warpAlign.segNames)
+%                 guidat.dtwLines(i0, end) = ...
+%                     plot(repmat(data{ii}.warpAlign.tEnd(i1), 1, 2), ...
+%                          ys, '-', 'Color', dtwClr);
+%              end
         end
 
         if i0 == 1
             guidat.dtwInfoTxt = text(xs(1) + 0.01 * (xs(2) - xs(1)), ...
                                      ys(1) + 0.05 * (ys(2) - ys(1)), ...
-                                     dtwInfoStr, 'Color', dtwClr);
+                                     dtwInfoStr, 'Color', dtwClr, 'FontSize', fontSize);
         end
         set(gca, 'XLim', xs, 'YLim', ys);
+        
+        if i0 == 1 % Check dtw results 
+            if check_warp_align(data{ii}.warpAlign)
+                title('WARNING: The order of the DTW labels appears erroneous. Please check.', ...
+                      'Color', errClr);
+            else
+                title('', 'Color', 'b');
+            end
+        end
+        
     end
+    
+    
 end
 drawnow;
 
