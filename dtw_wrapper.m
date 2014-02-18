@@ -42,8 +42,17 @@ end
 if length(data{trialNum}.times) ~= 3
     error('Unexpected length in data{%d}.times, possibly due to incomplete preprocessing.', trialNum);
 end
+
 t0 = data{trialNum}.times(2);
 t1 = data{trialNum}.times(3);
+
+if isfield(data{trialNum}, 'manualDTWOnset') && ~isempty(data{trialNum}.manualDTWOnset) && ~isnan(data{trialNum}.manualDTWOnset)
+    t0 = data{trialNum}.manualDTWOnset;
+    
+    if t0 >= t1
+        error('Manual DTW onset is not earlier than utterance offset');
+    end
+end
 
 if t0 >= t1
     error('The time marks seems to be erroneous: t0 >= t1');

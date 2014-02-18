@@ -219,6 +219,9 @@ guidat.dtwLines = [];
 guidat.dtwTxt = [];
 guidat.dtwInfoTxt = [];
 
+guidat.dtwManualOnset = [NaN, NaN, NaN];
+guidat.dtwManualOnsetLbl = [];
+
 guidat = disp_label_dtw(guidat, uihdls, data, ii);
 
 %% Display previous labeling and dtw results, if any
@@ -390,17 +393,50 @@ else
                     continue;
                 end
                 
-                % TODO: data{ii}.manualDTWOnset
+                bGood = 0;
+                while ~bGood
+                    title('Set manual DTW onset...', 'Color', 'b');
+                    set(0, 'CurrentFigure', guidat.hfig);
+                    set(gcf, 'CurrentAxes', guidat.hsp1);
+                    
+                    crd = ginput(1);
+                    bGood = (crd(1) < data{ii}.times(3));
+                    
+                    if ~bGood
+                        title('ERROR: manual DTW onset must be earlier than utterance offset. Please try again...', 'Color', 'r');
+                        pause(2);
+                        title('', 'Color', 'b');
+                    end                   
+                end
+                
+                data{ii}.manualDTWOnset = crd(1);
+                save(uihdls.matFileName, 'data');
+                warpAlign = dtw_wrapper(data{ii}.recordFile, uihdls.matFileName);
+
+                data{ii}.warpAlign = warpAlign;
+                save(uihdls.matFileName, 'data');
+                
+                guidat = disp_label_dtw(guidat, uihdls, data, ii);
+                
             case 5 % Cancel manual DTW onset
                 if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
                     msgbox('Error: DTW has not been performed yet.', 'ERROR', 'error', 'modal');
                     continue;
                 end
                 
-                if ~isifled(data{ii}, 'manualDTWOnset') || isempty(data{ii}, 'manualDTWOnset') || isnan(data{ii}, 'manualDTWOnset')
+                if ~isfield(data{ii}, 'manualDTWOnset') || isempty(data{ii}.manualDTWOnset) || isnan(data{ii}.manualDTWOnset)
                     msgbox('Error: no manual DTW onset was set previously', 'ERROR', 'error', 'modal');
                     continue;
                 end
+                
+                data{ii} = rmfield(data{ii}, 'manualDTWOnset');
+                save(uihdls.matFileName, 'data');
+                warpAlign = dtw_wrapper(data{ii}.recordFile, uihdls.matFileName);
+                
+                data{ii}.warpAlign = warpAlign;
+                save(uihdls.matFileName, 'data');
+                
+                guidat = disp_label_dtw(guidat, uihdls, data, ii);
                 
             case 6 % Manually adjust DTW label
                 if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
