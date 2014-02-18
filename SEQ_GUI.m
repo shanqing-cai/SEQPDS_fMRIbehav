@@ -165,23 +165,24 @@ if ~isempty(fsic(varargin, '--data'))
         set(cb_starter, 'Value', t_data.bStarter);
     end
     
-    if isfield(t_data, 'fmtOpts')
-        if isfield(t_data.fmtOpts, 'nLPC')
-            set(ui.pmNLPC, 'Value', find(NLPC_OPTIONS == t_data.fmtOpts.nLPC, 1));
-        end
-        
-        if isfield(t_data.fmtOpts, 'aFact')
-            set(ui.editAFact, 'String', sprintf('%.1f', t_data.fmtOpts.aFact));
-        end
-        
-        if isfield(t_data.fmtOpts, 'fn1')
-            set(ui.editFN1, 'String', sprintf('%.1f', t_data.fmtOpts.fn1));
-        end
-        
-        if isfield(t_data.fmtOpts, 'fn2')
-            set(ui.editFN2, 'String', sprintf('%.1f', t_data.fmtOpts.fn2));
-        end
-    end
+    % -- Not necessary, already done above -- %
+%     if isfield(t_data, 'fmtOpts')
+%         if isfield(t_data.fmtOpts, 'nLPC')
+%             set(ui.pmNLPC, 'Value', find(NLPC_OPTIONS == t_data.fmtOpts.nLPC, 1));
+%         end
+%         
+%         if isfield(t_data.fmtOpts, 'aFact')
+%             set(ui.editAFact, 'String', sprintf('%.1f', t_data.fmtOpts.aFact));
+%         end
+%         
+%         if isfield(t_data.fmtOpts, 'fn1')
+%             set(ui.editFN1, 'String', sprintf('%.1f', t_data.fmtOpts.fn1));
+%         end
+%         
+%         if isfield(t_data.fmtOpts, 'fn2')
+%             set(ui.editFN2, 'String', sprintf('%.1f', t_data.fmtOpts.fn2));
+%         end
+%     end
 end
 
 set(ui.hFig, 'Visible', 'on')        %# Make the GUI visible

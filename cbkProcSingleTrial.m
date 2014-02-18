@@ -235,9 +235,12 @@ else
         if ~isfield(data{ii}, 'times') || isempty(data{ii}.times)
             accept = 2; % Edit
         else
-            accept = menu('Select', 'Take', 'Edit', 'Select & Play');
+            accept = menu('Select', 'Take', 'Edit', 'Select & Play', ...
+                          'Set manual DTW onset', 'Cancel manual DTW onset', ...
+                          'Manually adjust DTW label', ...
+                          'Remove manually adjusted DTW label', ...
+                          'Add / edit comment');
         end
-        
         
         switch accept
             case 1 % Take the current results and proceed                
@@ -381,6 +384,38 @@ else
 
                 delete(guidat.hPBLine0);
                 delete(guidat.hPBLine1);
+            case 4 % Set manual DTW onset
+                if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
+                    msgbox('Error: DTW has not been performed yet.', 'ERROR', 'error', 'modal');
+                    continue;
+                end
+                
+                % TODO: data{ii}.manualDTWOnset
+            case 5 % Cancel manual DTW onset
+                if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
+                    msgbox('Error: DTW has not been performed yet.', 'ERROR', 'error', 'modal');
+                    continue;
+                end
+                
+                if ~isifled(data{ii}, 'manualDTWOnset') || isempty(data{ii}, 'manualDTWOnset') || isnan(data{ii}, 'manualDTWOnset')
+                    msgbox('Error: no manual DTW onset was set previously', 'ERROR', 'error', 'modal');
+                    continue;
+                end
+                
+            case 6 % Manually adjust DTW label
+                if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
+                    msgbox('Error: DTW has not been performed yet.', 'ERROR', 'error', 'modal');
+                    continue;
+                end
+                
+            case 7 % Cancel manually adjusted DTW label
+                if ~isfield(data{ii}, 'warpAlign') || isempty(data{ii}.warpAlign)
+                    msgbox('Error: DTW has not been performed yet.', 'ERROR', 'error', 'modal');
+                    continue;
+                end
+                
+            case 8 % Add / Edit comment
+
         end
     end
 end
