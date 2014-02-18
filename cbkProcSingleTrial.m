@@ -196,7 +196,8 @@ axis([ax(1) ax(2) bx(3) bx(4)]);
 %BOTTOM PLOT-----------------------------------
 guidat.hsp3 = subplot(3, 1, 3); hold on;
 nwin = 512; % samples
-noverlap = 256; %samples
+% noverlap = 256; %samples
+noverlap = 400; %samples
 nfft = 512; %samples
 
 plot(data{ii}.f0_time, data{ii}.f0, 'k-');
@@ -221,6 +222,9 @@ guidat.dtwManualOnset = [NaN, NaN, NaN];
 guidat.dtwManualOnsetLbl = [];
 
 guidat.hComment = [];
+guidat.zoomStatus = 0;
+
+guidat.xLim = get(gca, 'XLim');
 
 guidat = disp_label_dtw(guidat, uihdls, data, ii);
 
@@ -242,7 +246,8 @@ else
                           'Set manual DTW onset', 'Cancel manual DTW onset', ...
                           'Manually adjust DTW label', ...
                           'Remove manually adjusted DTW label', ...
-                          'Add / edit comment');
+                          'Add / edit comment', ...
+                          'Zoom to word', 'Zoom to entire trial');
         end
         
         switch accept
@@ -557,6 +562,21 @@ else
                 
                 save(uihdls.matFileName, 'data');
                 guidat = disp_label_dtw(guidat, uihdls, data, ii);
+
+            case 9 % Zoom to word
+                if guidat.zoomStatus == 0    
+                    guidat.zoomStatus = 1;
+                    
+                    guidat = disp_label_dtw(guidat, uihdls, data, ii);
+                end
+                
+            case 10 % Zoom to entire trial
+                if guidat.zoomStatus == 1    
+                    guidat.zoomStatus = 0;
+                    
+                    guidat = disp_label_dtw(guidat, uihdls, data, ii);
+                end
+                
         end
     end
 end

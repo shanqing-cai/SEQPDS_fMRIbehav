@@ -101,6 +101,33 @@ if length(data{ii}.times) == 3
     set(gcf, 'CurrentAxes', guidat.hsp3);
     guidat.hLineEnd(3) = plot(repmat(data{ii}.times(3), 1, 2), get(gca, 'YLim'), 'b-');
     set(gcf, 'CurrentAxes', guidat.hsp1);
+    
+    %-- Set specified zoom --%
+    if guidat.zoomStatus == 0 % Entire trial 
+        set(gcf, 'CurrentAxes', guidat.hsp1);
+        set(gca, 'XLim', guidat.xLim);
+        set(gcf, 'CurrentAxes', guidat.hsp2);
+        set(gca, 'XLim', guidat.xLim);
+        set(gcf, 'CurrentAxes', guidat.hsp3);
+        set(gca, 'XLim', guidat.xLim);
+    else
+        if isfield(data{ii}, 'bStarter') && data{ii}.bStarter == 1
+            t0 = data{ii}.starterOnset;
+        else
+            t0 = data{ii}.times(2);
+        end
+        t1 = data{ii}.times(3);
+        
+        t0 = max([guidat.xLim(1), t0 - 0.1]);
+        t1 = min([guidat.xLim(2), t1 + 0.1]);
+        
+        set(gcf, 'CurrentAxes', guidat.hsp1);
+        set(gca, 'XLim', [t0, t1]);
+        set(gcf, 'CurrentAxes', guidat.hsp2);
+        set(gca, 'XLim', [t0, t1]);
+        set(gcf, 'CurrentAxes', guidat.hsp3);
+        set(gca, 'XLim', [t0, t1]);
+    end
 end
 
 %% Display dtw results
